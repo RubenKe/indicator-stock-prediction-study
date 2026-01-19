@@ -1,0 +1,25 @@
+stocks:
+  - AAPL
+  - MSFT
+  - AMZN
+
+forex:
+  - "EURUSD=X"
+  - "GBPUSD=X"
+  - "AUDUSD=X"
+
+indices:
+  - "^GSPC"
+  - GLD
+  - USO
+
+intervals:
+  - 1d
+  - 1h
+  - 15m
+
+periods:
+  1d: 5y
+  1h: 1y
+  15m: 60d
+  
