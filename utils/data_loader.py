@@ -22,6 +22,8 @@ def download_pair(pair, interval):
     # This flattens the columns so headers are just 'Open', 'High', etc.
     if isinstance(data.columns, pd.MultiIndex):
         data.columns = data.columns.get_level_values(0)
+    
+    data.columns = data.columns.str.lower()
 
     
     return data.tail(1200) # Keep the most recent 1200 rows so all df are equal in lenght
