@@ -1,8 +1,7 @@
 import backtrader as bt
 import pandas as pd
+from .dmac_strat import run as dmac  
 
-from dmac import dmac_strat as dmac
-
-all_strategies = {
+ALL_STRATEGIES = {
     "DMAC": dmac
 }
