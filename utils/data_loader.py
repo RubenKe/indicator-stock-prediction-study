@@ -2,23 +2,26 @@ import yfinance as yf
 from pathlib import Path
 import shutil
 import pandas as pd
+import yaml
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_PROCESSED = PROJECT_ROOT / "data" / "raw"
+CONFIG_PATH = PROJECT_ROOT / "config" / "config.yaml"
 
-Stocks_pairs = ['AAPL', 'MSFT', 'AMZN']
-forex_pairs = ['EURUSD=X', 'GBPUSD=X', 'AUDUSD=X']
-index_pairs = ['^GSPC', 'GLD', 'USO']
+with open(CONFIG_PATH, "r") as f:
+    config = yaml.safe_load(f)
 
-intervals = ['1d', '1h', '15m']
-periods = { '1d':'5y',
-            '1h':'1y',
-            '15m':'60d' }
+
+stocks_pairs = config["stocks"]
+forex_pairs = config["forex"]
+index_pairs = config["indices"]
+
+intervals = config["intervals"]
+periods = config["periods"]
 
 def download_pair(pair, interval):
     data = yf.download(pair, interval=interval, period=periods[interval], progress=False)
 
-    # 2. Fix the "Row 0" / MultiIndex issue
     # This flattens the columns so headers are just 'Open', 'High', etc.
     if isinstance(data.columns, pd.MultiIndex):
         data.columns = data.columns.get_level_values(0)
@@ -34,7 +37,7 @@ if DATA_PROCESSED.exists():
 DATA_PROCESSED.mkdir(parents=True, exist_ok=True)
 
 # Main loop
-for pair in (Stocks_pairs + forex_pairs + index_pairs):
+for pair in (stocks_pairs + forex_pairs + index_pairs):
     for interval in intervals:
 
         # Save with index=True to keep the proper Datetime Index
