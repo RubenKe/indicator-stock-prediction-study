@@ -1,6 +1,6 @@
 import backtrader as bt
 
-class SmaCross(bt.Strategy):
+class dmac_strat(bt.Strategy):
     # list of parameters which are configurable for the strategy
     params = dict(
         pfast=21,  # period for the fast moving average
