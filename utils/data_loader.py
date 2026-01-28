@@ -19,7 +19,7 @@ index_pairs = config["indices"]
 intervals = config["intervals"]
 periods = config["periods"]
 
-def download_pair(pair, interval):
+def download_pair(pair: str, interval: str) -> pd.DataFrame:
     data = yf.download(pair, interval=interval, period=periods[interval], progress=False)
 
     # This flattens the columns so headers are just 'Open', 'High', etc.
