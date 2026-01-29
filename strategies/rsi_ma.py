@@ -23,22 +23,26 @@ class RSI_MA(bt.Strategy):
         else:  # In position
             # SELL signal: RSI > 40 or after 10 periods
             if self.rsi[0] > self.p.sell_rsi or (len(self) - self.buy_bar >= 10):
-                self.sell()
+                self.close()
 
 
-def run(data, ma=200, buy_rsi=30, sell_rsi=40):
+def run(data, commission_, sizer, ma=200, buy_rsi=30, sell_rsi=40):
 
     # Create Backtrader engine
     cerebro = bt.Cerebro()
     
     # Add the strategy with custom parameters
     cerebro.addstrategy(RSI_MA, ma=ma, sell_rsi=sell_rsi, buy_rsi=buy_rsi)
-    
+    cerebro.broker.setcash(1000)
+    cerebro.broker.setcommission(commission=commission_)
+    cerebro.addsizer(bt.sizers.PercentSizer, percents=sizer)
+
     # Add price data to the engine
     cerebro.adddata(data)
     
     # Run the backtest
-    cerebro.run()
+    results = cerebro.run()
+    strat = results[0]
     
     # Return the engine (contains all results)
-    return cerebro  
+    return strat  
