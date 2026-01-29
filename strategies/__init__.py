@@ -1,9 +1,9 @@
 import backtrader as bt
 import pandas as pd
-from .dmac_strat import run as dmac
+from .dmac import run as dmac
 from .rsi_ma import run as rsi_ma
 
 ALL_STRATEGIES = {
-    "run_dmac": dmac,
-    "run_rsi_ma": rsi_ma
+    "run_DMAC": dmac,
+    "run_RSI_MA": rsi_ma
 }
