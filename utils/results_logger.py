@@ -14,8 +14,6 @@ RESULT_COLUMNS = [
     "sharpe",             # sharpe ratio
     "trades",             # total number of trades
     "win_rate",           # percentage of winning trades
-    "min_capital",        # lowest equity reached
-    "max_capital",        # highest equity reached
     "start_date",         # pd.Timestamp
     "end_date",           # pd.Timestamp
     "commission",         # commission in % per trade
