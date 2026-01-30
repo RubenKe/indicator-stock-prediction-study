@@ -1,5 +1,6 @@
 import pandas as pd
 from pathlib import Path
+
  
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SAVE_PATH = PROJECT_ROOT / "database"
@@ -22,4 +23,4 @@ RESULT_COLUMNS = [
 ]
 
 results_df = pd.DataFrame(columns=RESULT_COLUMNS)
-results_df.to_csv(SAVE_PATH / 'results.csv', index=True)
+results_df.to_csv(SAVE_PATH / 'results.parquet', index=True)
