@@ -40,6 +40,11 @@ def run(data, commission_, sizer, ma=200, buy_rsi=30, sell_rsi=40):
     # Add price data to the engine
     cerebro.adddata(data)
     
+    # Add analyzers
+    cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name='sharpe')
+    cerebro.addanalyzer(bt.analyzers.DrawDown, _name='drawdown')
+    cerebro.addanalyzer(bt.analyzers.TradeAnalyzer, _name='trades')
+
     # Run the backtest
     results = cerebro.run()
     strat = results[0]
