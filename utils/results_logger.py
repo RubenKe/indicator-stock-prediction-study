@@ -23,4 +23,4 @@ RESULT_COLUMNS = [
 ]
 
 results_df = pd.DataFrame(columns=RESULT_COLUMNS)
-results_df.to_csv(SAVE_PATH / 'results.parquet', index=True)
+results_df.to_parquet(SAVE_PATH / 'results.parquet', index=True)
