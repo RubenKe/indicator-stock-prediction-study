@@ -10,7 +10,7 @@ RESULT_COLUMNS = [
     "symbol",             # AAPL, EURUSD=X
     "interval",           # 15m, 1h, 1d
     "parameters",         # dict of strategy parameters
-    "return",             # total return in %
+    "return",             # return in % (15% meaning 15% was made)
     "sharpe",             # sharpe ratio
     "trades",             # total number of trades
     "win_rate",           # percentage of winning trades
