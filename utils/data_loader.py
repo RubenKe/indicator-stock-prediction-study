@@ -29,7 +29,7 @@ def download_pair(pair: str, interval: str) -> pd.DataFrame:
     data.columns = data.columns.str.lower()
 
     
-    return data.tail(1200) # Keep the most recent 1200 rows so all df are equal in lenght
+    return data.tail(1500) # Keep the most recent 1500 rows so all df are equal in lenght
 
 # Cleanup and directory creation
 if DATA_PROCESSED.exists():
