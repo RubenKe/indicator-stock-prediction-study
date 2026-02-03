@@ -28,7 +28,9 @@ with open("config/config.yaml", "r") as f:
 
 commission = config['commission']
 sizer = config['sizer']
-# stocks = config['stocks'] # Unused variable in your original snippet, but fine to keep if needed
+INTERVAL_TO_TIMEFRAME = config['INTERVAL_TO_TIMEFRAME']
+
+stocks = config['stocks'] # Unused variable in your original snippet, but fine to keep if needed
 intervals = config['intervals']
 params = config['params']
 
@@ -41,6 +43,17 @@ strategy_names = list(params.keys())
 param_sets = {
     "DMAC": list(product(params["DMAC"]["short_ema"], params["DMAC"]["long_ema"])),
     "RSI_MA": list(product(params["RSI_MA"]["ma"], params["RSI_MA"]["buy_rsi"], params["RSI_MA"]["sell_rsi"]))
+}
+
+BT_TIMEFRAME_MAP = {
+    "Minutes": bt.TimeFrame.Minutes,
+    "Days": bt.TimeFrame.Days,
+    "Weeks": bt.TimeFrame.Weeks,
+}
+
+INTERVAL_TO_TIMEFRAME = {
+    interval: BT_TIMEFRAME_MAP[name]
+    for interval, name in config["INTERVAL_TO_TIMEFRAME"].items()
 }
 
 # --- 4. Helper Functions ---
@@ -99,6 +112,8 @@ for symbol in tqdm(all_symbols, desc="Backtesting Symbols"):
                     data=data_feed,
                     commission_=commission,
                     sizer=sizer,
+                    interval=interval,
+                    interval_to_timeframe = INTERVAL_TO_TIMEFRAME,
                     **param_dict)
                 
                 # --- ANALYZER EXTRACTION ---
