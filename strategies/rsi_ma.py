@@ -24,30 +24,41 @@ class RSI_MA(bt.Strategy):
             # SELL signal: RSI > 40 or after 10 periods
             if self.rsi[0] > self.p.sell_rsi or (len(self) - self.buy_bar >= 10):
                 self.close()
+        
+        if self.position and self._is_last_bar():
+            self.close()
+
+    def _is_last_bar(self):
+        return len(self.data) - 1 == self.data._last()
 
 
-def run(data, commission_, sizer, ma=200, buy_rsi=30, sell_rsi=40):
-
+def run(data, commission_, sizer, interval, interval_to_timeframe, ma=200, buy_rsi=30, sell_rsi=40):
     # Create Backtrader engine
     cerebro = bt.Cerebro()
     
-    # Add the strategy with custom parameters
-    cerebro.addstrategy(RSI_MA, ma=ma, sell_rsi=sell_rsi, buy_rsi=buy_rsi)
+    # Strategy
+    cerebro.addstrategy(RSI_MA, ma=ma, buy_rsi=buy_rsi, sell_rsi=sell_rsi)
+
+    # Broker
     cerebro.broker.setcash(1000)
     cerebro.broker.setcommission(commission=commission_)
     cerebro.addsizer(bt.sizers.PercentSizer, percents=sizer)
+    
+    # Interval-aware Sharpe
+    timeframe = interval_to_timeframe.get(interval, bt.TimeFrame.Days)
 
-    # Add price data to the engine
+    # add data 
     cerebro.adddata(data)
-    
-    # Add analyzers
-    cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name='sharpe')
-    cerebro.addanalyzer(bt.analyzers.DrawDown, _name='drawdown')
-    cerebro.addanalyzer(bt.analyzers.TradeAnalyzer, _name='trades')
 
-    # Run the backtest
+    cerebro.addanalyzer(
+        bt.analyzers.SharpeRatio,
+        timeframe=timeframe,
+        annualize=True,
+        _name="sharpe"
+    )
+
+    cerebro.addanalyzer(bt.analyzers.DrawDown, _name="drawdown")
+    cerebro.addanalyzer(bt.analyzers.TradeAnalyzer, _name="trades")
+
     results = cerebro.run()
-    strat = results[0]
-    
-    # Return the engine (contains all results)
-    return strat  
+    return results[0]

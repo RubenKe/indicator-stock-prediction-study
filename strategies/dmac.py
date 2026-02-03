@@ -29,29 +29,41 @@ class DMAC(bt.Strategy):
         elif self.position and self.crossover < 0:
             self.close()
 
-def run(data, commission_, sizer, pfast=50, pslow=100):
+        if self.position and self._is_last_bar():
+            self.close()
+
+    def _is_last_bar(self):
+        return len(self.data) - 1 == self.data._last()
+
+
+def run(data, commission_, sizer, interval, interval_to_timeframe, pfast=50, pslow=100):
 
     # Create Backtrader engine
     cerebro = bt.Cerebro()
     
-    # Add the strategy with custom parameters
+    # Strategy
     cerebro.addstrategy(DMAC, pfast=pfast, pslow=pslow)
+
+    # Broker
     cerebro.broker.setcash(1000)
     cerebro.broker.setcommission(commission=commission_)
     cerebro.addsizer(bt.sizers.PercentSizer, percents=sizer)
-
     
-    # Add price data to the engine
+    # Interval-aware Sharpe
+    timeframe = interval_to_timeframe.get(interval, bt.TimeFrame.Days)
+
+    # add data 
     cerebro.adddata(data)
-    
-    # Add analyzers
-    cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name='sharpe')
-    cerebro.addanalyzer(bt.analyzers.DrawDown, _name='drawdown')
-    cerebro.addanalyzer(bt.analyzers.TradeAnalyzer, _name='trades')
 
-    # Run the backtest
+    cerebro.addanalyzer(
+        bt.analyzers.SharpeRatio,
+        timeframe=timeframe,
+        annualize=True,
+        _name="sharpe"
+    )
+
+    cerebro.addanalyzer(bt.analyzers.DrawDown, _name="drawdown")
+    cerebro.addanalyzer(bt.analyzers.TradeAnalyzer, _name="trades")
+
     results = cerebro.run()
-    strat = results[0]
-    
-    # Return the engine (contains all results)
-    return strat  
+    return results[0]
