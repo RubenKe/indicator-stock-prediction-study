@@ -19,7 +19,7 @@ intervals:
   - 15m
 
 periods:
-  1d: 5y
+  1d: 1501d
   1h: 1y
   15m: 60d
 
@@ -32,6 +32,16 @@ params:
     ma: [20, 50, 100, 200]
     buy_rsi: [20, 30, 35, 40, 50]
     sell_rsi: [35, 40, 50, 75]
-  
-commission: 0
-sizer: 50
+
+INTERVAL_TO_TIMEFRAME:
+  "1m": Minutes
+  "5m": Minutes
+  "15m": Minutes
+  "30m": Minutes
+  "1h": Minutes
+  "4h": Minutes
+  "1d": Days
+  "1wk": Weeks
+
+commission: 0.0005
+sizer: 100
