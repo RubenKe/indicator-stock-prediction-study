@@ -41,7 +41,12 @@ strategy_names = list(params.keys())
 
 # Prepare parameter combinations
 param_sets = {
-    "DMAC": list(product(params["DMAC"]["short_ema"], params["DMAC"]["long_ema"])),
+    "DMAC": list(product(
+        params["DMAC"]["short_ema"],
+        params["DMAC"]["long_ema"],
+        params["DMAC"]["adx_period"],
+        params["DMAC"]["adx_threshold"],
+    )),
     "RSI_MA": list(product(params["RSI_MA"]["ma"], params["RSI_MA"]["buy_rsi"], params["RSI_MA"]["sell_rsi"]))
 }
 
@@ -62,6 +67,8 @@ def make_param_dict(strategy_name, param_tuple):
         return {
             "pfast": param_tuple[0],
             "pslow": param_tuple[1],
+            "adx_period": param_tuple[2],
+            "adx_threshold": param_tuple[3],
         }
     elif strategy_name == "RSI_MA":
         return {

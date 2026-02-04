@@ -6,7 +6,9 @@ class DMAC(bt.Strategy):
     # Define customizable parameters (can be overridden when running)
     params = dict(
         pfast=50,      # Fast moving average period
-        pslow=100      # Slow moving average period
+        pslow=100,     # Slow moving average period
+        adx_period=14, # ADX lookback period
+        adx_threshold=20  # Minimum ADX to allow entries
     )
 
     def __init__(self):
@@ -17,12 +19,13 @@ class DMAC(bt.Strategy):
         # CrossOver indicator: returns > 0 when sma1 crosses above sma2,
         # returns < 0 when sma1 crosses below sma2
         self.crossover = bt.ind.CrossOver(sma1, sma2)
+        self.adx = bt.ind.ADX(period=self.p.adx_period)
 
     def next(self):
         # Called on each bar (candle) after sufficient data is available
         
-        # BUY signal: fast MA crosses above slow MA (uptrend)
-        if not self.position and self.crossover > 0:
+        # BUY signal: fast MA crosses above slow MA (uptrend) and ADX confirms trend strength
+        if not self.position and self.crossover > 0 and self.adx[0] >= self.p.adx_threshold:
             self.buy()
         
         # SELL signal: fast MA crosses below slow MA (downtrend)
@@ -36,13 +39,19 @@ class DMAC(bt.Strategy):
         return len(self.data) - 1 == self.data._last()
 
 
-def run(data, commission_, sizer, interval, interval_to_timeframe, pfast=50, pslow=100):
+def run(data, commission_, sizer, interval, interval_to_timeframe, pfast=50, pslow=100, adx_period=14, adx_threshold=20):
 
     # Create Backtrader engine
     cerebro = bt.Cerebro()
     
     # Strategy
-    cerebro.addstrategy(DMAC, pfast=pfast, pslow=pslow)
+    cerebro.addstrategy(
+        DMAC,
+        pfast=pfast,
+        pslow=pslow,
+        adx_period=adx_period,
+        adx_threshold=adx_threshold,
+    )
 
     # Broker
     cerebro.broker.setcash(1000)

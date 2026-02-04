@@ -27,6 +27,8 @@ params:
   DMAC:
     short_ema: [5, 10, 20, 50]
     long_ema: [30, 100, 200]
+    adx_period: [7, 14, 30]
+    adx_threshold: [20, 25]
   
   RSI_MA:
     ma: [20, 50, 100, 200]
@@ -43,5 +45,5 @@ INTERVAL_TO_TIMEFRAME:
   "1d": Days
   "1wk": Weeks
 
-commission: 0.0005
-sizer: 100
+commission: 0.0
+sizer: 50
