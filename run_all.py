@@ -131,9 +131,12 @@ for symbol in tqdm(all_symbols, desc="Backtesting Symbols"):
                 # 2. Extract Trade Counts 
                 total_trades = ta.total.total if 'total' in ta else 0
                 won_trades = ta.won.total if 'won' in ta else 0 
-                
-                # 3. Calculate Win Rate (as a float)
                 win_rate = (won_trades / total_trades) if total_trades > 0 else 0.0
+
+                # 3. calulate market gain
+                start_price = data_feed['close'].iloc[0]
+                end_price = data_feed['close'].iloc[-1]
+                market_gain = ((end_price - start_price)/ start_price) *100
 
                 new_result = {
                     "strategy": strategy_name,
@@ -147,7 +150,8 @@ for symbol in tqdm(all_symbols, desc="Backtesting Symbols"):
                     "start_date": pd.Timestamp(bt.num2date(res.data.datetime.array[0])),
                     "end_date": pd.Timestamp(bt.num2date(res.data.datetime.array[-1])),
                     "commission": commission,
-                    "sizer": sizer
+                    "sizer": sizer,
+                    "market_gain": market_gain
                 }
 
                 all_new_results.append(new_result)

@@ -18,6 +18,7 @@ def make_file():
         "end_date",           # pd.Timestamp
         "commission",         # commission in % per trade
         "sizer",              # % of capital used per trade
+        "market_gain"         # % of market grown during trading period
     ]
 
     results_df = pd.DataFrame(columns=RESULT_COLUMNS)
