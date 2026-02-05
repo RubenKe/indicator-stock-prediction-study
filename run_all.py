@@ -138,12 +138,15 @@ for symbol in tqdm(all_symbols, desc="Backtesting Symbols"):
                 end_price = data_feed['close'].iloc[-1]
                 market_gain = ((end_price - start_price)/ start_price) *100
 
+                # 4. calculate stratey gain and excess return
+                strategy_return = ((res.broker.getvalue() - starting_cash) / starting_cash) * 100
+                excess_return = strategy_return - market_gain
                 new_result = {
                     "strategy": strategy_name,
                     "symbol": symbol,
                     "interval": interval,
                     "parameters": param_key,
-                    "return": ((res.broker.getvalue() - starting_cash) / starting_cash) * 100,                    
+                    "return": strategy_return,                    
                     "sharpe": sa.get('sharperatio', 0) if sa.get('sharperatio') is not None else 0,                    
                     "trades": total_trades,
                     "win_rate": win_rate,
@@ -151,7 +154,8 @@ for symbol in tqdm(all_symbols, desc="Backtesting Symbols"):
                     "end_date": pd.Timestamp(bt.num2date(res.data.datetime.array[-1])),
                     "commission": commission,
                     "sizer": sizer,
-                    "market_gain": market_gain
+                    "market_gain": market_gain,
+                    "excess_return": excess_return
                 }
 
                 all_new_results.append(new_result)
