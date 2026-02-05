@@ -134,8 +134,8 @@ for symbol in tqdm(all_symbols, desc="Backtesting Symbols"):
                 win_rate = (won_trades / total_trades) if total_trades > 0 else 0.0
 
                 # 3. calulate market gain
-                start_price = data_feed['close'].iloc[0]
-                end_price = data_feed['close'].iloc[-1]
+                start_price = price_df['close'].iloc[0]
+                end_price = price_df['close'].iloc[-1]
                 market_gain = ((end_price - start_price)/ start_price) *100
 
                 # 4. calculate stratey gain and excess return
