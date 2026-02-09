@@ -47,7 +47,19 @@ param_sets = {
         params["DMAC"]["adx_period"],
         params["DMAC"]["adx_threshold"],
     )),
-    "RSI_MA": list(product(params["RSI_MA"]["ma"], params["RSI_MA"]["buy_rsi"], params["RSI_MA"]["sell_rsi"]))
+    "RSI_MA": list(product(
+        params["RSI_MA"]["ma"],
+        params["RSI_MA"]["buy_rsi"],
+        params["RSI_MA"]["sell_rsi"],
+    )),
+    "BBANDS_MR": list(product(
+        params["BBANDS_MR"]["bb_len"],
+        params["BBANDS_MR"]["bb_k"],
+        params["BBANDS_MR"]["rsi_os"],
+        params["BBANDS_MR"]["adx_max"],
+        params["BBANDS_MR"]["stop_atr"],
+        params["BBANDS_MR"]["max_hold_bars"],
+    )),
 }
 
 BT_TIMEFRAME_MAP = {
@@ -76,6 +88,15 @@ def make_param_dict(strategy_name, param_tuple):
             "buy_rsi": param_tuple[1],
             "sell_rsi": param_tuple[2],
         }
+    elif strategy_name == "BBANDS_MR":
+        return {
+            "bb_len": param_tuple[0],
+            "bb_k": param_tuple[1],
+            "rsi_os": param_tuple[2],
+            "adx_max": param_tuple[3],
+            "stop_atr": param_tuple[4],
+            "max_hold_bars": param_tuple[5],
+        }
     return {}
 
 def normalize_params(param_dict):
@@ -87,7 +108,7 @@ all_new_results = []
 for symbol in tqdm(all_symbols, desc="Backtesting Symbols"):
     for interval in intervals:
         for strategy_name in strategy_names:
-            for param_tuple in param_sets[strategy_name]:
+            for param_tuple in tqdm(param_sets[strategy_name], desc=f"Running {strategy_name} on {symbol}, interval: {interval} "):
 
                 # Prepare parameters
                 param_dict = make_param_dict(strategy_name, param_tuple)

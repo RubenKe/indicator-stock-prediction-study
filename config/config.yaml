@@ -35,6 +35,14 @@ params:
     buy_rsi: [35, 40, 50]
     sell_rsi: [35, 40, 50, 75]
 
+  BBANDS_MR:
+    bb_len: [20, 30]
+    bb_k: [2.0, 2.5]
+    rsi_os: [30, 35]
+    adx_max: [20]
+    stop_atr: [1.5, 2.0]
+    max_hold_bars: [20]
+
 INTERVAL_TO_TIMEFRAME:
   "1m": Minutes
   "5m": Minutes
