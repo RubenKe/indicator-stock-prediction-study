@@ -43,6 +43,16 @@ params:
     stop_atr: [1.5, 2.0]
     max_hold_bars: [20]
 
+  DONCHIAN_BO:
+    entry_len: [20, 40]
+    exit_len: [10, 20]
+    atr_len: [14]
+    entry_buffer_atr: [0.0, 0.25]
+    stop_atr: [2.0]
+    trail_atr: [3.0]
+    max_hold_bars: [100]
+    cooldown_bars: [0, 5]
+
 INTERVAL_TO_TIMEFRAME:
   "1m": Minutes
   "5m": Minutes

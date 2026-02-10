@@ -7,7 +7,6 @@ class BBandsMeanReversion(bt.Strategy):
         bb_k=2.0,
         rsi_len=14,
         rsi_os=30,
-        rsi_ob=70,  # used if allow_short
         adx_len=14,
         adx_max=20,
         trend_len=100,
@@ -21,7 +20,6 @@ class BBandsMeanReversion(bt.Strategy):
         max_hold_bars=20,
         fail_bars=5,
         rsi_fail=40,
-        allow_short=False,
     )
 
     def __init__(self):
@@ -39,7 +37,6 @@ class BBandsMeanReversion(bt.Strategy):
 
         # State
         self.long_setup_bar = None
-        self.short_setup_bar = None
         self.entry_bar = None
         self.entry_price = None
         self.entry_atr = None
@@ -69,13 +66,6 @@ class BBandsMeanReversion(bt.Strategy):
             if dist_atr >= self.p.z_atr_min:
                 self.long_setup_bar = len(self)
 
-        # Short setup
-        if self.p.allow_short:
-            dist_atr_s = (self.data.close[0] - self.bb_up[0]) / max(self.atr[0], 1e-12)
-            if self.data.close[0] > self.bb_up[0] and self.rsi[0] > self.p.rsi_ob:
-                if dist_atr_s >= self.p.z_atr_min:
-                    self.short_setup_bar = len(self)
-
     def _setup_valid(self, setup_bar):
         if setup_bar is None:
             return False
@@ -83,12 +73,6 @@ class BBandsMeanReversion(bt.Strategy):
 
     def _enter_long(self):
         self.buy()
-        self.entry_bar = len(self)
-        self.entry_price = self.data.close[0]
-        self.entry_atr = self.atr[0]
-
-    def _enter_short(self):
-        self.sell()
         self.entry_bar = len(self)
         self.entry_price = self.data.close[0]
         self.entry_atr = self.atr[0]
@@ -121,36 +105,11 @@ class BBandsMeanReversion(bt.Strategy):
 
         return False
 
-    def _should_exit_short(self):
-        if self.entry_bar is None:
-            return False
-
-        stop_price = self.entry_price + self.p.stop_atr * self.entry_atr
-        if self.data.close[0] >= stop_price:
-            return True
-
-        if (len(self) - self.entry_bar) >= self.p.max_hold_bars:
-            return True
-
-        if self.data.close[0] <= self.bb_mid[0]:
-            return True
-
-        if (
-            (len(self) - self.entry_bar) >= self.p.fail_bars
-            and self.rsi[0] > (100 - self.p.rsi_fail)
-        ):
-            return True
-        if self.data.close[0] > self.bb_up[0]:
-            return True
-
-        return False
-
     def _reset_trade_state(self):
         self.entry_bar = None
         self.entry_price = None
         self.entry_atr = None
         self.long_setup_bar = None
-        self.short_setup_bar = None
 
     # --- Core loop -------------------------------------------------------
     def next(self):
@@ -158,8 +117,6 @@ class BBandsMeanReversion(bt.Strategy):
         if not self.position:
             if not self._setup_valid(self.long_setup_bar):
                 self.long_setup_bar = None
-            if not self._setup_valid(self.short_setup_bar):
-                self.short_setup_bar = None
 
         # Record setups
         self._record_setup()
@@ -169,12 +126,6 @@ class BBandsMeanReversion(bt.Strategy):
         # Exits
         if self.position.size > 0:
             if self._should_exit_long():
-                self.close()
-                self._reset_trade_state()
-                return
-
-        elif self.position.size < 0:
-            if self._should_exit_short():
                 self.close()
                 self._reset_trade_state()
                 return
@@ -189,16 +140,6 @@ class BBandsMeanReversion(bt.Strategy):
             ):
                 self._enter_long()
                 return
-
-            # Short trigger
-            if self.p.allow_short:
-                if (
-                    self._setup_valid(self.short_setup_bar)
-                    and self.data.close[-1] > self.bb_up[-1]
-                    and self.data.close[0] < self.bb_up[0]
-                ):
-                    self._enter_short()
-                    return
 
         # Safety: close on last bar
         if self.position and self._is_last_bar():
@@ -219,7 +160,6 @@ def run(
     bb_k=2.0,
     rsi_len=14,
     rsi_os=30,
-    rsi_ob=70,
     adx_len=14,
     adx_max=20,
     trend_len=100,
@@ -233,7 +173,6 @@ def run(
     max_hold_bars=20,
     fail_bars=5,
     rsi_fail=40,
-    allow_short=False,
 ):
     cerebro = bt.Cerebro()
     cerebro.addstrategy(
@@ -242,7 +181,6 @@ def run(
         bb_k=bb_k,
         rsi_len=rsi_len,
         rsi_os=rsi_os,
-        rsi_ob=rsi_ob,
         adx_len=adx_len,
         adx_max=adx_max,
         trend_len=trend_len,
@@ -256,7 +194,6 @@ def run(
         max_hold_bars=max_hold_bars,
         fail_bars=fail_bars,
         rsi_fail=rsi_fail,
-        allow_short=allow_short,
     )
 
     cerebro.broker.setcash(1000)

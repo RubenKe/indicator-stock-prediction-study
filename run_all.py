@@ -60,6 +60,16 @@ param_sets = {
         params["BBANDS_MR"]["stop_atr"],
         params["BBANDS_MR"]["max_hold_bars"],
     )),
+    "DONCHIAN_BO": list(product(
+        params["DONCHIAN_BO"]["entry_len"],
+        params["DONCHIAN_BO"]["exit_len"],
+        params["DONCHIAN_BO"]["atr_len"],
+        params["DONCHIAN_BO"]["entry_buffer_atr"],
+        params["DONCHIAN_BO"]["stop_atr"],
+        params["DONCHIAN_BO"]["trail_atr"],
+        params["DONCHIAN_BO"]["max_hold_bars"],
+        params["DONCHIAN_BO"]["cooldown_bars"],
+    )),
 }
 
 BT_TIMEFRAME_MAP = {
@@ -96,6 +106,17 @@ def make_param_dict(strategy_name, param_tuple):
             "adx_max": param_tuple[3],
             "stop_atr": param_tuple[4],
             "max_hold_bars": param_tuple[5],
+        }
+    elif strategy_name == "DONCHIAN_BO":
+        return {
+            "entry_len": param_tuple[0],
+            "exit_len": param_tuple[1],
+            "atr_len": param_tuple[2],
+            "entry_buffer_atr": param_tuple[3],
+            "stop_atr": param_tuple[4],
+            "trail_atr": param_tuple[5],
+            "max_hold_bars": param_tuple[6],
+            "cooldown_bars": param_tuple[7],
         }
     return {}
 
