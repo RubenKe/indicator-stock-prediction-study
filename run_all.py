@@ -70,6 +70,16 @@ param_sets = {
         params["DONCHIAN_BO"]["max_hold_bars"],
         params["DONCHIAN_BO"]["cooldown_bars"],
     )),
+    "RSI_PULLBACK": list(product(
+        params["RSI_PULLBACK"]["trend_len"],
+        params["RSI_PULLBACK"]["slope_lookback"],
+        params["RSI_PULLBACK"]["rsi_len"],
+        params["RSI_PULLBACK"]["rsi_pullback"],
+        params["RSI_PULLBACK"]["rsi_recover"],
+        params["RSI_PULLBACK"]["atr_len"],
+        params["RSI_PULLBACK"]["stop_atr"],
+        params["RSI_PULLBACK"]["max_hold_bars"],
+    )),
 }
 
 BT_TIMEFRAME_MAP = {
@@ -117,6 +127,17 @@ def make_param_dict(strategy_name, param_tuple):
             "trail_atr": param_tuple[5],
             "max_hold_bars": param_tuple[6],
             "cooldown_bars": param_tuple[7],
+        }
+    elif strategy_name == "RSI_PULLBACK":
+        return {
+            "trend_len": param_tuple[0],
+            "slope_lookback": param_tuple[1],
+            "rsi_len": param_tuple[2],
+            "rsi_pullback": param_tuple[3],
+            "rsi_recover": param_tuple[4],
+            "atr_len": param_tuple[5],
+            "stop_atr": param_tuple[6],
+            "max_hold_bars": param_tuple[7],
         }
     return {}
 

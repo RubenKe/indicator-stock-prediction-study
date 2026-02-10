@@ -53,6 +53,16 @@ params:
     max_hold_bars: [100]
     cooldown_bars: [0, 5]
 
+  RSI_PULLBACK:
+    trend_len: [90, 100, 110]
+    slope_lookback: [5]
+    rsi_len: [14, 21]
+    rsi_pullback: [40]
+    rsi_recover: [50]
+    atr_len: [14]
+    stop_atr: [2.0]
+    max_hold_bars: [55, 60, 65]
+
 INTERVAL_TO_TIMEFRAME:
   "1m": Minutes
   "5m": Minutes
