@@ -80,6 +80,13 @@ param_sets = {
         params["RSI_PULLBACK"]["stop_atr"],
         params["RSI_PULLBACK"]["max_hold_bars"],
     )),
+    "ATR_VOL_BO": list(product(
+        params["ATR_VOL_BO"]["atr_len"],
+        params["ATR_VOL_BO"]["atr_expansion_mult"],
+        params["ATR_VOL_BO"]["stop_atr"],
+        params["ATR_VOL_BO"]["breakout_len"],
+        params["ATR_VOL_BO"]["max_hold_bars"],
+    )),
 }
 
 BT_TIMEFRAME_MAP = {
@@ -138,6 +145,14 @@ def make_param_dict(strategy_name, param_tuple):
             "atr_len": param_tuple[5],
             "stop_atr": param_tuple[6],
             "max_hold_bars": param_tuple[7],
+        }
+    elif strategy_name == "ATR_VOL_BO":
+        return {
+            "atr_len": param_tuple[0],
+            "atr_expansion_mult": param_tuple[1],
+            "stop_atr": param_tuple[2],
+            "breakout_len": param_tuple[3],
+            "max_hold_bars": param_tuple[4],
         }
     return {}
 
