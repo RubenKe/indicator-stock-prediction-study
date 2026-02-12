@@ -87,6 +87,14 @@ param_sets = {
         params["ATR_VOL_BO"]["breakout_len"],
         params["ATR_VOL_BO"]["max_hold_bars"],
     )),
+    "MA_TREND_CONT": list(product(
+        params["MA_TREND_CONT"]["trend_len"],
+        params["MA_TREND_CONT"]["slope_lookback"],
+        params["MA_TREND_CONT"]["stop_atr"],
+        params["MA_TREND_CONT"]["atr_len"],
+        params["MA_TREND_CONT"]["max_hold_bars"],
+        params["MA_TREND_CONT"]["momentum_exit"],
+    )),
 }
 
 BT_TIMEFRAME_MAP = {
@@ -153,6 +161,15 @@ def make_param_dict(strategy_name, param_tuple):
             "stop_atr": param_tuple[2],
             "breakout_len": param_tuple[3],
             "max_hold_bars": param_tuple[4],
+        }
+    elif strategy_name == "MA_TREND_CONT":
+        return {
+            "trend_len": param_tuple[0],
+            "slope_lookback": param_tuple[1],
+            "stop_atr": param_tuple[2],
+            "atr_len": param_tuple[3],
+            "max_hold_bars": param_tuple[4],
+            "momentum_exit": param_tuple[5],
         }
     return {}
 

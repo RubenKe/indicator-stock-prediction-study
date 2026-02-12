@@ -4,6 +4,7 @@ from .bbands_mr import run as run_BBANDS_MR
 from .donchian_breakout import run as run_DONCHIAN_BO
 from .rsi_pullback import run as run_RSI_PULLBACK
 from .atr_volatility_breakout import run as run_ATR_VOL_BO
+from .ma_trend_continuation import run as run_MA_TREND_CONT
 
 ALL_STRATEGIES = {
     "DMAC": run_DMAC,
@@ -12,4 +13,5 @@ ALL_STRATEGIES = {
     "DONCHIAN_BO": run_DONCHIAN_BO,
     "RSI_PULLBACK": run_RSI_PULLBACK,
     "ATR_VOL_BO": run_ATR_VOL_BO,
+    "MA_TREND_CONT": run_MA_TREND_CONT,
 }
