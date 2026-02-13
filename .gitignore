@@ -27,6 +27,7 @@ Thumbs.db
 data/raw/
 data/processed/
 database/*.parquet
+analysis/results/
 
 # Python packaging
 *.egg
