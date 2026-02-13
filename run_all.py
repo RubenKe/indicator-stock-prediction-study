@@ -95,6 +95,14 @@ param_sets = {
         params["MA_TREND_CONT"]["max_hold_bars"],
         params["MA_TREND_CONT"]["momentum_exit"],
     )),
+    "VWAP_RECLAIM": list(product(
+        params["VWAP_RECLAIM"]["vwap_period"],
+        params["VWAP_RECLAIM"]["slope_lookback"],
+        params["VWAP_RECLAIM"]["stop_atr"],
+        params["VWAP_RECLAIM"]["setup_lookback"],
+        params["VWAP_RECLAIM"]["atr_len"],
+        params["VWAP_RECLAIM"]["max_hold_bars"],
+    )),
 }
 
 BT_TIMEFRAME_MAP = {
@@ -170,6 +178,15 @@ def make_param_dict(strategy_name, param_tuple):
             "atr_len": param_tuple[3],
             "max_hold_bars": param_tuple[4],
             "momentum_exit": param_tuple[5],
+        }
+    elif strategy_name == "VWAP_RECLAIM":
+        return {
+            "vwap_period": param_tuple[0],
+            "slope_lookback": param_tuple[1],
+            "stop_atr": param_tuple[2],
+            "setup_lookback": param_tuple[3],
+            "atr_len": param_tuple[4],
+            "max_hold_bars": param_tuple[5],
         }
     return {}
 
