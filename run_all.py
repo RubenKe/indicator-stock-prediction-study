@@ -103,6 +103,49 @@ param_sets = {
         params["VWAP_RECLAIM"]["atr_len"],
         params["VWAP_RECLAIM"]["max_hold_bars"],
     )),
+    "EMA_ACCEL_BO": list(product(
+        params["EMA_ACCEL_BO"]["trend_len"],
+        params["EMA_ACCEL_BO"]["slope_lookback"],
+        params["EMA_ACCEL_BO"]["accel_mult"],
+        params["EMA_ACCEL_BO"]["stop_atr"],
+        params["EMA_ACCEL_BO"]["atr_len"],
+        params["EMA_ACCEL_BO"]["max_hold_bars"],
+    )),
+    "HHHL_STRUCT_BO": list(product(
+        params["HHHL_STRUCT_BO"]["swing_len"],
+        params["HHHL_STRUCT_BO"]["break_buffer"],
+        params["HHHL_STRUCT_BO"]["stop_buffer"],
+        params["HHHL_STRUCT_BO"]["atr_len"],
+        params["HHHL_STRUCT_BO"]["slope_lookback"],
+        params["HHHL_STRUCT_BO"]["range_mult"],
+        params["HHHL_STRUCT_BO"]["min_structure_size"],
+        params["HHHL_STRUCT_BO"]["atr_regime_exit"],
+        params["HHHL_STRUCT_BO"]["atr_collapse_mult"],
+        params["HHHL_STRUCT_BO"]["max_hold_bars"],
+    )),
+    "MA200_PULLBACK": list(product(
+        params["MA200_PULLBACK"]["long_len"],
+        params["MA200_PULLBACK"]["short_len"],
+        params["MA200_PULLBACK"]["stop_atr"],
+        params["MA200_PULLBACK"]["atr_len"],
+        params["MA200_PULLBACK"]["max_hold_bars"],
+    )),
+    "INSIDE_BAR_CONT": list(product(
+        params["INSIDE_BAR_CONT"]["trend_len"],
+        params["INSIDE_BAR_CONT"]["slope_lookback"],
+        params["INSIDE_BAR_CONT"]["stop_atr"],
+        params["INSIDE_BAR_CONT"]["atr_len"],
+        params["INSIDE_BAR_CONT"]["max_hold_bars"],
+    )),
+    "SMC_SWEEP_OBFVG": list(product(
+        params["SMC_SWEEP_OBFVG"]["pivot_L"],
+        params["SMC_SWEEP_OBFVG"]["eq_tol_atr"],
+        params["SMC_SWEEP_OBFVG"]["disp_atr"],
+        params["SMC_SWEEP_OBFVG"]["fvg_min_atr"],
+        params["SMC_SWEEP_OBFVG"]["atr_period"],
+        params["SMC_SWEEP_OBFVG"]["risk_per_trade"],
+        params["SMC_SWEEP_OBFVG"]["timeout_bars"],
+    )),
 }
 
 BT_TIMEFRAME_MAP = {
@@ -187,6 +230,54 @@ def make_param_dict(strategy_name, param_tuple):
             "setup_lookback": param_tuple[3],
             "atr_len": param_tuple[4],
             "max_hold_bars": param_tuple[5],
+        }
+    elif strategy_name == "EMA_ACCEL_BO":
+        return {
+            "trend_len": param_tuple[0],
+            "slope_lookback": param_tuple[1],
+            "accel_mult": param_tuple[2],
+            "stop_atr": param_tuple[3],
+            "atr_len": param_tuple[4],
+            "max_hold_bars": param_tuple[5],
+        }
+    elif strategy_name == "HHHL_STRUCT_BO":
+        return {
+            "swing_len": param_tuple[0],
+            "break_buffer": param_tuple[1],
+            "stop_buffer": param_tuple[2],
+            "atr_len": param_tuple[3],
+            "slope_lookback": param_tuple[4],
+            "range_mult": param_tuple[5],
+            "min_structure_size": param_tuple[6],
+            "atr_regime_exit": param_tuple[7],
+            "atr_collapse_mult": param_tuple[8],
+            "max_hold_bars": param_tuple[9],
+        }
+    elif strategy_name == "MA200_PULLBACK":
+        return {
+            "long_len": param_tuple[0],
+            "short_len": param_tuple[1],
+            "stop_atr": param_tuple[2],
+            "atr_len": param_tuple[3],
+            "max_hold_bars": param_tuple[4],
+        }
+    elif strategy_name == "INSIDE_BAR_CONT":
+        return {
+            "trend_len": param_tuple[0],
+            "slope_lookback": param_tuple[1],
+            "stop_atr": param_tuple[2],
+            "atr_len": param_tuple[3],
+            "max_hold_bars": param_tuple[4],
+        }
+    elif strategy_name == "SMC_SWEEP_OBFVG":
+        return {
+            "pivot_L": param_tuple[0],
+            "eq_tol_atr": param_tuple[1],
+            "disp_atr": param_tuple[2],
+            "fvg_min_atr": param_tuple[3],
+            "atr_period": param_tuple[4],
+            "risk_per_trade": param_tuple[5],
+            "timeout_bars": param_tuple[6],
         }
     return {}
 
