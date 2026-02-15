@@ -82,6 +82,44 @@ params:
     setup_lookback: [5]
     atr_len: [14]
     max_hold_bars: [80]
+  EMA_ACCEL_BO:
+    trend_len: [30, 50, 80]
+    slope_lookback: [5]
+    accel_mult: [0.75, 1.0, 1.25, 1.5]
+    stop_atr: [1.8, 2.0, 2.5]
+    atr_len: [14]
+    max_hold_bars: [60]
+  HHHL_STRUCT_BO:
+    swing_len: [3, 5, 8]
+    break_buffer: [0.2, 0.4, 0.6]
+    stop_buffer: [0.75, 1.0, 1.5]
+    atr_len: [14]
+    slope_lookback: [5]
+    range_mult: [1.0]
+    min_structure_size: [1.0]
+    atr_regime_exit: [False]
+    atr_collapse_mult: [0.7]
+    max_hold_bars: [60]
+  MA200_PULLBACK:
+    long_len: [150, 200, 250]
+    short_len: [15, 20, 30]
+    stop_atr: [1.8, 2.0, 2.5]
+    atr_len: [14]
+    max_hold_bars: [60]
+  INSIDE_BAR_CONT:
+    trend_len: [30, 50, 80]
+    slope_lookback: [3, 5, 8]
+    stop_atr: [1.5, 2.0, 2.5]
+    atr_len: [14]
+    max_hold_bars: [60]
+  SMC_SWEEP_OBFVG:
+    pivot_L: [2, 3, 5]
+    eq_tol_atr: [0.1, 0.2, 0.3]
+    disp_atr: [0.6, 0.8, 1.0, 1.2]
+    fvg_min_atr: [0.2, 0.3, 0.4]
+    atr_period: [14]
+    risk_per_trade: [0.005]
+    timeout_bars: [40]
 
 INTERVAL_TO_TIMEFRAME:
   "1m": Minutes
