@@ -115,7 +115,7 @@ params:
   SMC_SWEEP_OBFVG:
     pivot_L: [2, 3, 5]
     eq_tol_atr: [0.1, 0.2, 0.3]
-    disp_atr: [0.6, 0.8, 1.0, 1.2]
+    disp_atr: [0.8]
     fvg_min_atr: [0.2, 0.3, 0.4]
     atr_period: [14]
     risk_per_trade: [0.005]
