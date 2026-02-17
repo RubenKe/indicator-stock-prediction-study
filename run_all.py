@@ -13,6 +13,7 @@ from tqdm import tqdm
 # --- 1. Setup Paths ---
 DATA_PROCESSED = Path("data") / "raw"
 RESULTS_PATH = Path("database/results.parquet")
+BACKTEST_VERSION = "long_short_v1"
 
 # --- 2. Load or Create Results File ---
 if not RESULTS_PATH.exists():
@@ -21,6 +22,8 @@ if not RESULTS_PATH.exists():
 
 # Load existing data to check for duplicates later
 df = pd.read_parquet(RESULTS_PATH)
+if "backtest_version" not in df.columns:
+    df["backtest_version"] = "legacy"
 
 # --- 3. Load Config ---
 with open("config/config.yaml", "r") as f:
@@ -30,7 +33,6 @@ commission = config['commission']
 sizer = config['sizer']
 INTERVAL_TO_TIMEFRAME = config['INTERVAL_TO_TIMEFRAME']
 
-stocks = config['stocks'] # Unused variable in your original snippet, but fine to keep if needed
 intervals = config['intervals']
 params = config['params']
 
@@ -302,7 +304,8 @@ for symbol in tqdm(all_symbols, desc="Backtesting Symbols"):
                         (df["strategy"] == strategy_name) &
                         (df["symbol"] == symbol) &
                         (df["interval"] == interval) &
-                        (df["parameters"] == param_key)
+                        (df["parameters"] == param_key) &
+                        (df["backtest_version"] == BACKTEST_VERSION)
                     ).any()
 
                     if exists:
@@ -358,7 +361,8 @@ for symbol in tqdm(all_symbols, desc="Backtesting Symbols"):
                     "commission": commission,
                     "sizer": sizer,
                     "market_gain": market_gain,
-                    "excess_return": excess_return
+                    "excess_return": excess_return,
+                    "backtest_version": BACKTEST_VERSION,
                 }
 
                 all_new_results.append(new_result)

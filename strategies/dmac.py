@@ -23,20 +23,22 @@ class DMAC(bt.Strategy):
 
     def next(self):
         # Called on each bar (candle) after sufficient data is available
-        # Enforce long-only behavior: close any accidental short and skip new orders
-        if self.position.size < 0:
+        if self.position.size > 0 and self.crossover < 0:
             self.close()
             return
 
-        # BUY signal: fast MA crosses above slow MA (uptrend) and ADX confirms trend strength
-        if not self.position and self.crossover > 0 and self.adx[0] >= self.p.adx_threshold:
-            self.buy()
-        
-        # SELL signal: fast MA crosses below slow MA (downtrend)
-        elif self.position.size > 0 and self.crossover < 0:
+        if self.position.size < 0 and self.crossover > 0:
             self.close()
+            return
 
-        if self.position.size > 0 and self._is_last_bar():
+        # Entry signals: trade both sides when trend strength is present
+        if not self.position and self.adx[0] >= self.p.adx_threshold:
+            if self.crossover > 0:
+                self.buy()
+            elif self.crossover < 0:
+                self.sell()
+
+        if self.position and self._is_last_bar():
             self.close()
 
     def _is_last_bar(self):
@@ -60,8 +62,6 @@ def run(data, commission_, sizer, interval, interval_to_timeframe, pfast=50, psl
     # Broker
     cerebro.broker.setcash(1000)
     cerebro.broker.setcommission(commission=commission_)
-    # Long-only: avoid short cash accounting (still safe for long trades)
-    cerebro.broker.set_shortcash(False)
     cerebro.addsizer(bt.sizers.PercentSizer, percents=sizer)
     
     # Interval-aware Sharpe

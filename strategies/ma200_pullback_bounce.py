@@ -15,14 +15,16 @@ class MA200PullbackBounce(bt.Strategy):
         self.short_ma = bt.ind.SMA(self.data.close, period=self.p.short_len)
         self.atr = bt.ind.ATR(period=self.p.atr_len)
 
-        self.pullback_armed = False
+        self.long_pullback_armed = False
+        self.short_pullback_armed = False
         self.entry_price = None
         self.entry_atr = None
         self.stop_price = None
         self.bars_in_trade = 0
 
     def _reset_state(self):
-        self.pullback_armed = False
+        self.long_pullback_armed = False
+        self.short_pullback_armed = False
         self.entry_price = None
         self.entry_atr = None
         self.stop_price = None
@@ -31,20 +33,19 @@ class MA200PullbackBounce(bt.Strategy):
     def _is_last_bar(self):
         return len(self.data) - 1 == self.data._last()
 
-    def _long_bias_valid(self):
-        return self.data.close[0] > self.long_ma[0]
+    def _bias_direction(self):
+        if self.data.close[0] > self.long_ma[0]:
+            return 1
+        if self.data.close[0] < self.long_ma[0]:
+            return -1
+        return 0
 
     def next(self):
         min_bars = max(self.p.long_len, self.p.short_len, self.p.atr_len) + 1
         if len(self.data) <= min_bars:
             return
 
-        if self.position.size < 0:
-            self.close()
-            self._reset_state()
-            return
-
-        # Manage open long
+        # Manage open position
         if self.position.size > 0:
             self.bars_in_trade += 1
 
@@ -62,29 +63,69 @@ class MA200PullbackBounce(bt.Strategy):
                 self.close()
                 self._reset_state()
                 return
+        elif self.position.size < 0:
+            self.bars_in_trade += 1
 
-        # Flat: arm on dip below short MA while long-term bias is bullish
+            if self.stop_price is not None and self.data.close[0] >= self.stop_price:
+                self.close()
+                self._reset_state()
+                return
+
+            if self.data.close[0] > self.long_ma[0]:
+                self.close()
+                self._reset_state()
+                return
+
+            if self.bars_in_trade >= self.p.max_hold_bars:
+                self.close()
+                self._reset_state()
+                return
+
+        # Flat: arm on pullback against dominant long/short bias
         if self.position.size == 0:
-            if not self._long_bias_valid():
-                self.pullback_armed = False
-                return
+            bias_direction = self._bias_direction()
+            if bias_direction != 1:
+                self.long_pullback_armed = False
+            if bias_direction != -1:
+                self.short_pullback_armed = False
 
-            if self.data.close[0] < self.short_ma[0]:
-                self.pullback_armed = True
-                return
+            if bias_direction == 1:
+                if self.data.close[0] < self.short_ma[0]:
+                    self.long_pullback_armed = True
+                    return
 
-            cross_up_short = (
-                self.data.close[-1] <= self.short_ma[-1]
-                and self.data.close[0] > self.short_ma[0]
-            )
-            if self.pullback_armed and cross_up_short:
-                self.buy()
-                self.entry_price = self.data.close[0]
-                self.entry_atr = self.atr[0]
-                self.stop_price = self.entry_price - self.p.stop_atr * self.entry_atr
-                self.bars_in_trade = 0
-                self.pullback_armed = False
-                return
+                cross_up_short = (
+                    self.data.close[-1] <= self.short_ma[-1]
+                    and self.data.close[0] > self.short_ma[0]
+                )
+                if self.long_pullback_armed and cross_up_short:
+                    self.buy()
+                    self.entry_price = self.data.close[0]
+                    self.entry_atr = self.atr[0]
+                    self.stop_price = self.entry_price - self.p.stop_atr * self.entry_atr
+                    self.bars_in_trade = 0
+                    self.long_pullback_armed = False
+                    self.short_pullback_armed = False
+                    return
+
+            if bias_direction == -1:
+                if self.data.close[0] > self.short_ma[0]:
+                    self.short_pullback_armed = True
+                    return
+
+                cross_down_short = (
+                    self.data.close[-1] >= self.short_ma[-1]
+                    and self.data.close[0] < self.short_ma[0]
+                )
+                if self.short_pullback_armed and cross_down_short:
+                    self.sell()
+                    self.entry_price = self.data.close[0]
+                    self.entry_atr = self.atr[0]
+                    self.stop_price = self.entry_price + self.p.stop_atr * self.entry_atr
+                    self.bars_in_trade = 0
+                    self.short_pullback_armed = False
+                    self.long_pullback_armed = False
+                    return
 
         if self.position and self._is_last_bar():
             self.close()
@@ -115,7 +156,6 @@ def run(
 
     cerebro.broker.setcash(1000)
     cerebro.broker.setcommission(commission=commission_)
-    cerebro.broker.set_shortcash(False)
     cerebro.addsizer(bt.sizers.PercentSizer, percents=sizer)
 
     timeframe = interval_to_timeframe.get(interval, bt.TimeFrame.Days)

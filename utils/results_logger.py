@@ -19,7 +19,8 @@ def make_file():
         "commission",         # commission in % per trade
         "sizer",              # % of capital used per trade
         "market_gain",        # % of market grown during trading period
-        "excess_return"        # % difference of return to market gain
+        "excess_return",      # % difference of return to market gain
+        "backtest_version",   # strategy logic/version tag
     ]
 
     results_df = pd.DataFrame(columns=RESULT_COLUMNS)

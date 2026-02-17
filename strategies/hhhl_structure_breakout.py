@@ -20,6 +20,7 @@ class HHHLStructureBreakout(bt.Strategy):
 
         self.last_swing_high = None
         self.last_swing_high_bar = None
+        self.prev_swing_high = None
         self.last_swing_low = None
         self.last_swing_low_bar = None
         self.prev_swing_low = None
@@ -45,6 +46,7 @@ class HHHLStructureBreakout(bt.Strategy):
         high_window = [self.data.high[i] for i in range(-2 * k, 1)]
         pivot_high = self.data.high[-k]
         if pivot_high == max(high_window) and self.last_swing_high_bar != pivot_bar:
+            self.prev_swing_high = self.last_swing_high
             self.last_swing_high = pivot_high
             self.last_swing_high_bar = pivot_bar
 
@@ -59,6 +61,11 @@ class HHHLStructureBreakout(bt.Strategy):
         if self.prev_swing_low is None or self.last_swing_low is None:
             return False
         return self.last_swing_low > self.prev_swing_low
+
+    def _bearish_structure(self):
+        if self.prev_swing_high is None or self.last_swing_high is None:
+            return False
+        return self.last_swing_high < self.prev_swing_high
 
     def _volatility_expansion_ok(self):
         if len(self) <= self.p.slope_lookback:
@@ -85,14 +92,9 @@ class HHHLStructureBreakout(bt.Strategy):
         if len(self.data) <= min_bars:
             return
 
-        if self.position.size < 0:
-            self.close()
-            self._reset_trade_state()
-            return
-
         self._update_structure()
 
-        # Manage open long
+        # Manage open position
         if self.position.size > 0:
             self.bars_in_trade += 1
 
@@ -122,15 +124,51 @@ class HHHLStructureBreakout(bt.Strategy):
                 self.close()
                 self._reset_trade_state()
                 return
+        elif self.position.size < 0:
+            self.bars_in_trade += 1
 
-        # Flat: enter on break of latest swing high in bullish structure
+            if self.stop_price is not None and self.data.close[0] >= self.stop_price:
+                self.close()
+                self._reset_trade_state()
+                return
+
+            if (
+                self.last_swing_high is not None
+                and self.data.close[0] > self.last_swing_high
+            ):
+                self.close()
+                self._reset_trade_state()
+                return
+
+            if self.bars_in_trade >= self.p.max_hold_bars:
+                self.close()
+                self._reset_trade_state()
+                return
+
+            if (
+                self.p.atr_regime_exit
+                and self.entry_atr is not None
+                and self.atr[0] < self.p.atr_collapse_mult * self.entry_atr
+            ):
+                self.close()
+                self._reset_trade_state()
+                return
+
+        # Flat: enter on break of latest swing level in aligned structure
         if self.position.size == 0:
-            break_level = None
-            break_level_prev = None
+            break_up = None
+            break_up_prev = None
             if self.last_swing_high is not None:
-                break_level = self.last_swing_high + self.p.break_buffer * self.atr[0]
-                break_level_prev = (
+                break_up = self.last_swing_high + self.p.break_buffer * self.atr[0]
+                break_up_prev = (
                     self.last_swing_high + self.p.break_buffer * self.atr[-1]
+                )
+            break_down = None
+            break_down_prev = None
+            if self.last_swing_low is not None:
+                break_down = self.last_swing_low - self.p.break_buffer * self.atr[0]
+                break_down_prev = (
+                    self.last_swing_low - self.p.break_buffer * self.atr[-1]
                 )
 
             if (
@@ -139,14 +177,31 @@ class HHHLStructureBreakout(bt.Strategy):
                 and self.last_swing_low is not None
                 and self._structure_size_ok()
                 and self._volatility_expansion_ok()
-                and self.data.close[-1] <= break_level_prev
-                and self.data.close[0] > break_level
+                and self.data.close[-1] <= break_up_prev
+                and self.data.close[0] > break_up
             ):
                 self.buy()
                 self.entry_price = self.data.close[0]
                 self.entry_atr = self.atr[0]
                 self.stop_price = (
                     self.last_swing_low - self.p.stop_buffer * self.entry_atr
+                )
+                self.bars_in_trade = 0
+                return
+            if (
+                self._bearish_structure()
+                and self.last_swing_high is not None
+                and self.last_swing_low is not None
+                and self._structure_size_ok()
+                and self._volatility_expansion_ok()
+                and self.data.close[-1] >= break_down_prev
+                and self.data.close[0] < break_down
+            ):
+                self.sell()
+                self.entry_price = self.data.close[0]
+                self.entry_atr = self.atr[0]
+                self.stop_price = (
+                    self.last_swing_high + self.p.stop_buffer * self.entry_atr
                 )
                 self.bars_in_trade = 0
                 return
@@ -190,7 +245,6 @@ def run(
 
     cerebro.broker.setcash(1000)
     cerebro.broker.setcommission(commission=commission_)
-    cerebro.broker.set_shortcash(False)
     cerebro.addsizer(bt.sizers.PercentSizer, percents=sizer)
 
     timeframe = interval_to_timeframe.get(interval, bt.TimeFrame.Days)

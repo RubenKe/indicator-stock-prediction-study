@@ -10,19 +10,26 @@ class RSI_MA(bt.Strategy):
     def __init__(self):
         self.sma = bt.ind.SMA(period=self.p.ma)
         self.rsi = bt.ind.RSI(period=10)
-        self.buy_bar = None
+        self.entry_bar = None
 
     def next(self):
         # Called on each bar (candle) after sufficient data is available
+        short_entry_rsi = 100 - self.p.buy_rsi
+        short_exit_rsi = 100 - self.p.sell_rsi
         
-        # BUY signal: close above 200 MA and RSI < 30 (oversold)
-        if not self.position:  # Not in position
+        # Entry logic
+        if not self.position:
             if self.data.close[0] > self.sma[0] and self.rsi[0] < self.p.buy_rsi:
                 self.buy()
-                self.buy_bar = len(self)
-        else:  # In position
-            # SELL signal: RSI > 40 or after 10 periods
-            if self.rsi[0] > self.p.sell_rsi or (len(self) - self.buy_bar >= 10):
+                self.entry_bar = len(self)
+            elif self.data.close[0] < self.sma[0] and self.rsi[0] > short_entry_rsi:
+                self.sell()
+                self.entry_bar = len(self)
+        elif self.position.size > 0:
+            if self.rsi[0] > self.p.sell_rsi or (len(self) - self.entry_bar >= 10):
+                self.close()
+        else:
+            if self.rsi[0] < short_exit_rsi or (len(self) - self.entry_bar >= 10):
                 self.close()
         
         if self.position and self._is_last_bar():

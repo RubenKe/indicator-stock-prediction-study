@@ -28,13 +28,20 @@ class InsideBarBreakoutContinuation(bt.Strategy):
     def _is_last_bar(self):
         return len(self.data) - 1 == self.data._last()
 
-    def _trend_valid(self):
+    def _trend_direction(self):
         if len(self) <= self.p.slope_lookback:
-            return False
-        return (
+            return 0
+        if (
             self.data.close[0] > self.trend_ma[0]
             and self.trend_ma[0] > self.trend_ma[-self.p.slope_lookback]
-        )
+        ):
+            return 1
+        if (
+            self.data.close[0] < self.trend_ma[0]
+            and self.trend_ma[0] < self.trend_ma[-self.p.slope_lookback]
+        ):
+            return -1
+        return 0
 
     def _prev_is_inside_bar(self):
         return (
@@ -47,12 +54,7 @@ class InsideBarBreakoutContinuation(bt.Strategy):
         if len(self.data) <= min_bars:
             return
 
-        if self.position.size < 0:
-            self.close()
-            self._reset_state()
-            return
-
-        # Manage open long
+        # Manage open position
         if self.position.size > 0:
             self.bars_in_trade += 1
 
@@ -70,11 +72,29 @@ class InsideBarBreakoutContinuation(bt.Strategy):
                 self.close()
                 self._reset_state()
                 return
+        elif self.position.size < 0:
+            self.bars_in_trade += 1
+
+            if self.stop_price is not None and self.data.close[0] >= self.stop_price:
+                self.close()
+                self._reset_state()
+                return
+
+            if self.data.close[0] > self.trend_ma[0]:
+                self.close()
+                self._reset_state()
+                return
+
+            if self.bars_in_trade >= self.p.max_hold_bars:
+                self.close()
+                self._reset_state()
+                return
 
         # Flat: inside-bar compression breakout inside trend
         if self.position.size == 0:
+            trend_direction = self._trend_direction()
             if (
-                self._trend_valid()
+                trend_direction == 1
                 and self._prev_is_inside_bar()
                 and self.data.close[0] > self.data.high[-1]
             ):
@@ -82,6 +102,17 @@ class InsideBarBreakoutContinuation(bt.Strategy):
                 self.entry_price = self.data.close[0]
                 self.entry_atr = self.atr[0]
                 self.stop_price = self.entry_price - self.p.stop_atr * self.entry_atr
+                self.bars_in_trade = 0
+                return
+            if (
+                trend_direction == -1
+                and self._prev_is_inside_bar()
+                and self.data.close[0] < self.data.low[-1]
+            ):
+                self.sell()
+                self.entry_price = self.data.close[0]
+                self.entry_atr = self.atr[0]
+                self.stop_price = self.entry_price + self.p.stop_atr * self.entry_atr
                 self.bars_in_trade = 0
                 return
 
@@ -114,7 +145,6 @@ def run(
 
     cerebro.broker.setcash(1000)
     cerebro.broker.setcommission(commission=commission_)
-    cerebro.broker.set_shortcash(False)
     cerebro.addsizer(bt.sizers.PercentSizer, percents=sizer)
 
     timeframe = interval_to_timeframe.get(interval, bt.TimeFrame.Days)

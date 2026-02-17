@@ -14,6 +14,7 @@ class ATRVolatilityExpansionBreakout(bt.Strategy):
         self.atr = bt.ind.ATR(period=self.p.atr_len)
         self.atr_ma = bt.ind.SMA(self.atr, period=self.p.atr_len)
         self.highest_high = bt.ind.Highest(self.data.high, period=self.p.breakout_len)
+        self.lowest_low = bt.ind.Lowest(self.data.low, period=self.p.breakout_len)
 
         self.entry_price = None
         self.entry_atr = None
@@ -41,12 +42,7 @@ class ATRVolatilityExpansionBreakout(bt.Strategy):
         if len(self.data) <= min_bars:
             return
 
-        if self.position.size < 0:
-            self.close()
-            self._reset_state()
-            return
-
-        # Manage open long
+        # Manage open position
         if self.position.size > 0:
             self.bars_in_trade += 1
 
@@ -64,16 +60,41 @@ class ATRVolatilityExpansionBreakout(bt.Strategy):
                 self.close()
                 self._reset_state()
                 return
+        elif self.position.size < 0:
+            self.bars_in_trade += 1
+
+            if self.stop_price is not None and self.data.close[0] >= self.stop_price:
+                self.close()
+                self._reset_state()
+                return
+
+            if self.atr[0] < self.atr_ma[0]:
+                self.close()
+                self._reset_state()
+                return
+
+            if self.bars_in_trade >= self.p.max_hold_bars:
+                self.close()
+                self._reset_state()
+                return
 
         # Flat: look for expansion + breakout
         if self.position.size == 0:
             if self._expansion_ready():
-                breakout_level = self.highest_high[-1]
-                if self.data.close[0] > breakout_level:
+                breakout_up = self.highest_high[-1]
+                breakout_down = self.lowest_low[-1]
+                if self.data.close[0] > breakout_up:
                     self.buy()
                     self.entry_price = self.data.close[0]
                     self.entry_atr = self.atr[0]
                     self.stop_price = self.entry_price - self.p.stop_atr * self.entry_atr
+                    self.bars_in_trade = 0
+                    return
+                if self.data.close[0] < breakout_down:
+                    self.sell()
+                    self.entry_price = self.data.close[0]
+                    self.entry_atr = self.atr[0]
+                    self.stop_price = self.entry_price + self.p.stop_atr * self.entry_atr
                     self.bars_in_trade = 0
                     return
 
@@ -106,7 +127,6 @@ def run(
 
     cerebro.broker.setcash(1000)
     cerebro.broker.setcommission(commission=commission_)
-    cerebro.broker.set_shortcash(False)
     cerebro.addsizer(bt.sizers.PercentSizer, percents=sizer)
 
     timeframe = interval_to_timeframe.get(interval, bt.TimeFrame.Days)

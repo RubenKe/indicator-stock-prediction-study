@@ -525,7 +525,6 @@ def run(
 
     cerebro.broker.setcash(1000)
     cerebro.broker.setcommission(commission=commission_)
-    cerebro.broker.set_shortcash(False)
     # Ensure end-of-data market exits are executed on the current close.
     cerebro.broker.set_coc(True)
     cerebro.addsizer(bt.sizers.PercentSizer, percents=sizer)

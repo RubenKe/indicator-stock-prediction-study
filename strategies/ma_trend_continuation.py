@@ -28,12 +28,20 @@ class MATrendContinuation(bt.Strategy):
     def _is_last_bar(self):
         return len(self.data) - 1 == self.data._last()
 
-    def _trend_valid(self):
+    def _trend_direction(self):
         if len(self) <= self.p.trend_len or len(self) <= self.p.slope_lookback:
-            return False
-        rising_ma = self.trend_ma[0] > self.trend_ma[-self.p.slope_lookback]
-        above_ma = self.data.close[0] > self.trend_ma[0]
-        return rising_ma and above_ma
+            return 0
+        if (
+            self.trend_ma[0] > self.trend_ma[-self.p.slope_lookback]
+            and self.data.close[0] > self.trend_ma[0]
+        ):
+            return 1
+        if (
+            self.trend_ma[0] < self.trend_ma[-self.p.slope_lookback]
+            and self.data.close[0] < self.trend_ma[0]
+        ):
+            return -1
+        return 0
 
     # --- Core loop -------------------------------------------------------
     def next(self):
@@ -44,12 +52,6 @@ class MATrendContinuation(bt.Strategy):
             2,  # for previous high/low lookback
         )
         if len(self.data) <= min_bars:
-            return
-
-        # Force flat if accidental short appears
-        if self.position.size < 0:
-            self.close()
-            self._reset_state()
             return
 
         # Manage open position
@@ -75,13 +77,42 @@ class MATrendContinuation(bt.Strategy):
                 self.close()
                 self._reset_state()
                 return
+        elif self.position.size < 0:
+            self.bars_in_trade += 1
 
-        # Flat: look for continuation inside uptrend
+            if self.stop_price is not None and self.data.close[0] >= self.stop_price:
+                self.close()
+                self._reset_state()
+                return
+
+            if self.data.close[0] > self.trend_ma[0]:
+                self.close()
+                self._reset_state()
+                return
+
+            if self.p.momentum_exit and self.data.close[0] > self.data.high[-1]:
+                self.close()
+                self._reset_state()
+                return
+
+            if self.bars_in_trade >= self.p.max_hold_bars:
+                self.close()
+                self._reset_state()
+                return
+
+        # Flat: look for continuation with trend alignment
         if self.position.size == 0:
-            if self._trend_valid() and self.data.close[0] > self.data.high[-1]:
+            trend_direction = self._trend_direction()
+            if trend_direction == 1 and self.data.close[0] > self.data.high[-1]:
                 self.buy()
                 self.entry_price = self.data.close[0]
                 self.stop_price = self.entry_price - self.p.stop_atr * self.atr[0]
+                self.bars_in_trade = 0
+                return
+            if trend_direction == -1 and self.data.close[0] < self.data.low[-1]:
+                self.sell()
+                self.entry_price = self.data.close[0]
+                self.stop_price = self.entry_price + self.p.stop_atr * self.atr[0]
                 self.bars_in_trade = 0
                 return
 
@@ -116,7 +147,6 @@ def run(
 
     cerebro.broker.setcash(1000)
     cerebro.broker.setcommission(commission=commission_)
-    cerebro.broker.set_shortcash(False)
     cerebro.addsizer(bt.sizers.PercentSizer, percents=sizer)
 
     timeframe = interval_to_timeframe.get(interval, bt.TimeFrame.Days)

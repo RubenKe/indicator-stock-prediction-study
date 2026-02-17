@@ -21,32 +21,35 @@ class RSIPullbackTrend(bt.Strategy):
         self.entry_price = None
         self.stop_price = None
         self.bars_in_trade = 0
-        self.pullback_armed = False
+        self.long_pullback_armed = False
+        self.short_pullback_armed = False
 
-    def _trend_valid(self):
+    def _trend_direction(self):
         if len(self.data) <= max(self.p.trend_len, self.p.slope_lookback):
-            return False
+            return 0
         ma_now = self.trend_ma[0]
         ma_past = self.trend_ma[-self.p.slope_lookback]
-        return self.data.close[0] > ma_now and ma_now > ma_past
+        if self.data.close[0] > ma_now and ma_now > ma_past:
+            return 1
+        if self.data.close[0] < ma_now and ma_now < ma_past:
+            return -1
+        return 0
 
     def _reset_state(self):
         self.entry_price = None
         self.stop_price = None
         self.bars_in_trade = 0
-        self.pullback_armed = False
+        self.long_pullback_armed = False
+        self.short_pullback_armed = False
 
     def next(self):
         min_bars = max(self.p.trend_len, self.p.rsi_len, self.p.atr_len) + self.p.slope_lookback
         if len(self.data) <= min_bars:
             return
 
-        if self.position.size < 0:
-            self.close()
-            self._reset_state()
-            return
-
-        trend_ok = self._trend_valid()
+        short_pullback = 100 - self.p.rsi_pullback
+        short_recover = 100 - self.p.rsi_recover
+        trend_direction = self._trend_direction()
 
         # Exit management
         if self.position.size > 0:
@@ -66,24 +69,58 @@ class RSIPullbackTrend(bt.Strategy):
                 self.close()
                 self._reset_state()
                 return
+        elif self.position.size < 0:
+            self.bars_in_trade += 1
+
+            if self.stop_price is not None and self.data.close[0] >= self.stop_price:
+                self.close()
+                self._reset_state()
+                return
+
+            if self.data.close[0] > self.trend_ma[0]:
+                self.close()
+                self._reset_state()
+                return
+
+            if self.bars_in_trade >= self.p.max_hold_bars:
+                self.close()
+                self._reset_state()
+                return
 
         # Flat logic
         if self.position.size == 0:
-            if not trend_ok:
-                self.pullback_armed = False
-                return
+            if trend_direction != 1:
+                self.long_pullback_armed = False
+            if trend_direction != -1:
+                self.short_pullback_armed = False
 
-            if not self.pullback_armed and self.rsi[0] < self.p.rsi_pullback:
-                self.pullback_armed = True
-                return
+            if trend_direction == 1:
+                if not self.long_pullback_armed and self.rsi[0] < self.p.rsi_pullback:
+                    self.long_pullback_armed = True
+                    return
 
-            if self.pullback_armed and self.rsi[-1] <= self.p.rsi_recover < self.rsi[0]:
-                self.buy()
-                self.entry_price = self.data.close[0]
-                self.stop_price = self.entry_price - self.p.stop_atr * self.atr[0]
-                self.bars_in_trade = 0
-                self.pullback_armed = False
-                return
+                if self.long_pullback_armed and self.rsi[-1] <= self.p.rsi_recover < self.rsi[0]:
+                    self.buy()
+                    self.entry_price = self.data.close[0]
+                    self.stop_price = self.entry_price - self.p.stop_atr * self.atr[0]
+                    self.bars_in_trade = 0
+                    self.long_pullback_armed = False
+                    self.short_pullback_armed = False
+                    return
+
+            if trend_direction == -1:
+                if not self.short_pullback_armed and self.rsi[0] > short_pullback:
+                    self.short_pullback_armed = True
+                    return
+
+                if self.short_pullback_armed and self.rsi[-1] >= short_recover > self.rsi[0]:
+                    self.sell()
+                    self.entry_price = self.data.close[0]
+                    self.stop_price = self.entry_price + self.p.stop_atr * self.atr[0]
+                    self.bars_in_trade = 0
+                    self.short_pullback_armed = False
+                    self.long_pullback_armed = False
+                    return
 
         if self.position and self._is_last_bar():
             self.close()
@@ -123,7 +160,6 @@ def run(
 
     cerebro.broker.setcash(1000)
     cerebro.broker.setcommission(commission=commission_)
-    cerebro.broker.set_shortcash(False)
     cerebro.addsizer(bt.sizers.PercentSizer, percents=sizer)
 
     timeframe = interval_to_timeframe.get(interval, bt.TimeFrame.Days)
