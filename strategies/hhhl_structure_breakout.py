@@ -1,7 +1,8 @@
 import backtrader as bt
+from .risk_managed import RiskManagedMixin
 
 
-class HHHLStructureBreakout(bt.Strategy):
+class HHHLStructureBreakout(RiskManagedMixin, bt.Strategy):
     params = dict(
         swing_len=5,
         break_buffer=0.3,
@@ -13,9 +14,11 @@ class HHHLStructureBreakout(bt.Strategy):
         atr_regime_exit=False,
         atr_collapse_mult=0.7,
         max_hold_bars=60,
+        risk_config=None,
     )
 
     def __init__(self):
+        self._init_risk()
         self.atr = bt.ind.ATR(period=self.p.atr_len)
 
         self.last_swing_high = None
@@ -180,14 +183,16 @@ class HHHLStructureBreakout(bt.Strategy):
                 and self.data.close[-1] <= break_up_prev
                 and self.data.close[0] > break_up
             ):
-                self.buy()
-                self.entry_price = self.data.close[0]
-                self.entry_atr = self.atr[0]
-                self.stop_price = (
-                    self.last_swing_low - self.p.stop_buffer * self.entry_atr
-                )
-                self.bars_in_trade = 0
-                return
+                entry_price = self.data.close[0]
+                entry_atr = self.atr[0]
+                stop_price = self.last_swing_low - self.p.stop_buffer * entry_atr
+                order = self._risk_buy(stop_price=stop_price, entry_price=entry_price)
+                if order is not None:
+                    self.entry_price = entry_price
+                    self.entry_atr = entry_atr
+                    self.stop_price = stop_price
+                    self.bars_in_trade = 0
+                    return
             if (
                 self._bearish_structure()
                 and self.last_swing_high is not None
@@ -197,14 +202,16 @@ class HHHLStructureBreakout(bt.Strategy):
                 and self.data.close[-1] >= break_down_prev
                 and self.data.close[0] < break_down
             ):
-                self.sell()
-                self.entry_price = self.data.close[0]
-                self.entry_atr = self.atr[0]
-                self.stop_price = (
-                    self.last_swing_high + self.p.stop_buffer * self.entry_atr
-                )
-                self.bars_in_trade = 0
-                return
+                entry_price = self.data.close[0]
+                entry_atr = self.atr[0]
+                stop_price = self.last_swing_high + self.p.stop_buffer * entry_atr
+                order = self._risk_sell(stop_price=stop_price, entry_price=entry_price)
+                if order is not None:
+                    self.entry_price = entry_price
+                    self.entry_atr = entry_atr
+                    self.stop_price = stop_price
+                    self.bars_in_trade = 0
+                    return
 
         if self.position and self._is_last_bar():
             self.close()
@@ -227,6 +234,7 @@ def run(
     atr_regime_exit=False,
     atr_collapse_mult=0.7,
     max_hold_bars=60,
+    risk_config=None,
 ):
     cerebro = bt.Cerebro()
     cerebro.addstrategy(
@@ -241,11 +249,11 @@ def run(
         atr_regime_exit=atr_regime_exit,
         atr_collapse_mult=atr_collapse_mult,
         max_hold_bars=max_hold_bars,
+        risk_config=risk_config,
     )
 
     cerebro.broker.setcash(1000)
     cerebro.broker.setcommission(commission=commission_)
-    cerebro.addsizer(bt.sizers.PercentSizer, percents=sizer)
 
     timeframe = interval_to_timeframe.get(interval, bt.TimeFrame.Days)
     cerebro.adddata(data)

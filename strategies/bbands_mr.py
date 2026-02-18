@@ -1,7 +1,8 @@
 import backtrader as bt
+from .risk_managed import RiskManagedMixin
 
 
-class BBandsMeanReversion(bt.Strategy):
+class BBandsMeanReversion(RiskManagedMixin, bt.Strategy):
     params = dict(
         bb_len=20,
         bb_k=2.0,
@@ -20,9 +21,11 @@ class BBandsMeanReversion(bt.Strategy):
         max_hold_bars=20,
         fail_bars=5,
         rsi_fail=40,
+        risk_config=None,
     )
 
     def __init__(self):
+        self._init_risk()
         # Core indicators
         self.bb_mid = bt.ind.SMA(self.data.close, period=self.p.bb_len)
         self.bb_std = bt.ind.StdDev(self.data.close, period=self.p.bb_len)
@@ -80,16 +83,28 @@ class BBandsMeanReversion(bt.Strategy):
         return (len(self) - setup_bar) <= self.p.setup_lookback
 
     def _enter_long(self):
-        self.buy()
+        entry_price = self.data.close[0]
+        entry_atr = self.atr[0]
+        stop_price = entry_price - self.p.stop_atr * entry_atr
+        order = self._risk_buy(stop_price=stop_price, entry_price=entry_price)
+        if order is None:
+            return False
         self.entry_bar = len(self)
-        self.entry_price = self.data.close[0]
-        self.entry_atr = self.atr[0]
+        self.entry_price = entry_price
+        self.entry_atr = entry_atr
+        return True
 
     def _enter_short(self):
-        self.sell()
+        entry_price = self.data.close[0]
+        entry_atr = self.atr[0]
+        stop_price = entry_price + self.p.stop_atr * entry_atr
+        order = self._risk_sell(stop_price=stop_price, entry_price=entry_price)
+        if order is None:
+            return False
         self.entry_bar = len(self)
-        self.entry_price = self.data.close[0]
-        self.entry_atr = self.atr[0]
+        self.entry_price = entry_price
+        self.entry_atr = entry_atr
+        return True
 
     def _should_exit_long(self):
         if self.entry_bar is None:
@@ -184,15 +199,15 @@ class BBandsMeanReversion(bt.Strategy):
                 and self.data.close[-1] < self.bb_low[-1]
                 and self.data.close[0] > self.bb_low[0]
             ):
-                self._enter_long()
-                return
+                if self._enter_long():
+                    return
             if (
                 self._setup_valid(self.short_setup_bar)
                 and self.data.close[-1] > self.bb_up[-1]
                 and self.data.close[0] < self.bb_up[0]
             ):
-                self._enter_short()
-                return
+                if self._enter_short():
+                    return
 
         # Safety: close on last bar
         if self.position and self._is_last_bar():
@@ -226,6 +241,7 @@ def run(
     max_hold_bars=20,
     fail_bars=5,
     rsi_fail=40,
+    risk_config=None,
 ):
     cerebro = bt.Cerebro()
     cerebro.addstrategy(
@@ -247,11 +263,11 @@ def run(
         max_hold_bars=max_hold_bars,
         fail_bars=fail_bars,
         rsi_fail=rsi_fail,
+        risk_config=risk_config,
     )
 
     cerebro.broker.setcash(1000)
     cerebro.broker.setcommission(commission=commission_)
-    cerebro.addsizer(bt.sizers.PercentSizer, percents=sizer)
 
     timeframe = interval_to_timeframe.get(interval, bt.TimeFrame.Days)
     cerebro.adddata(data)

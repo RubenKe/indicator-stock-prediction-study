@@ -21,6 +21,7 @@ def make_file():
         "market_gain",        # % of market grown during trading period
         "excess_return",      # % difference of return to market gain
         "backtest_version",   # strategy logic/version tag
+        "risk_profile",       # risk config used for sizing
     ]
 
     results_df = pd.DataFrame(columns=RESULT_COLUMNS)

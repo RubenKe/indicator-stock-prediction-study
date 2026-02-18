@@ -1,9 +1,10 @@
 from collections import deque
 
 import backtrader as bt
+from .risk_managed import RiskManagedMixin
 
 
-class StructureSweepOBFVG(bt.Strategy):
+class StructureSweepOBFVG(RiskManagedMixin, bt.Strategy):
     params = dict(
         pivot_L=3,
         eq_tol_atr=0.15,
@@ -13,9 +14,11 @@ class StructureSweepOBFVG(bt.Strategy):
         risk_per_trade=0.005,
         timeout_bars=40,
         debug=False,
+        risk_config=None,
     )
 
     def __init__(self):
+        self._init_risk(base_risk_per_trade=self.p.risk_per_trade)
         self.ltf = self.datas[0]
         self.htf = self.datas[1] if len(self.datas) > 1 else self.datas[0]
 
@@ -354,19 +357,26 @@ class StructureSweepOBFVG(bt.Strategy):
             self._reset_to_idle()
             return
 
-        equity = float(self.broker.getvalue())
-        risk_amount = equity * self.p.risk_per_trade
-        size = risk_amount / stop_distance
-        if size <= 0:
+        self.stop_price = stop_price
+        if direction == "LONG":
+            self.entry_order = self._risk_buy(
+                stop_price=stop_price,
+                entry_price=entry_price,
+                exectype=bt.Order.Limit,
+            )
+        else:
+            self.entry_order = self._risk_sell(
+                stop_price=stop_price,
+                entry_price=entry_price,
+                exectype=bt.Order.Limit,
+            )
+
+        if self.entry_order is None:
             self._log("Invalid setup (size <= 0)")
             self._reset_to_idle()
             return
 
-        self.stop_price = stop_price
-        if direction == "LONG":
-            self.entry_order = self.buy(exectype=bt.Order.Limit, price=entry_price, size=size)
-        else:
-            self.entry_order = self.sell(exectype=bt.Order.Limit, price=entry_price, size=size)
+        size = self.entry_order.size
 
         self.state = "ORDER_PLACED"
         self._log(
@@ -509,6 +519,7 @@ def run(
     htf_timeframe=None,
     htf_compression=None,
     debug=False,
+    risk_config=None,
 ):
     cerebro = bt.Cerebro()
     cerebro.addstrategy(
@@ -521,13 +532,13 @@ def run(
         risk_per_trade=risk_per_trade,
         timeout_bars=timeout_bars,
         debug=debug,
+        risk_config=risk_config,
     )
 
     cerebro.broker.setcash(1000)
     cerebro.broker.setcommission(commission=commission_)
     # Ensure end-of-data market exits are executed on the current close.
     cerebro.broker.set_coc(True)
-    cerebro.addsizer(bt.sizers.PercentSizer, percents=sizer)
 
     if isinstance(data, (list, tuple)):
         ltf_data = data[0]

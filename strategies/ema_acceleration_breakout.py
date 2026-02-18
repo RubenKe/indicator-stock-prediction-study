@@ -1,7 +1,8 @@
 import backtrader as bt
+from .risk_managed import RiskManagedMixin
 
 
-class EMAAccelerationBreakout(bt.Strategy):
+class EMAAccelerationBreakout(RiskManagedMixin, bt.Strategy):
     params = dict(
         trend_len=50,
         slope_lookback=5,
@@ -9,9 +10,11 @@ class EMAAccelerationBreakout(bt.Strategy):
         atr_len=14,
         stop_atr=2.0,
         max_hold_bars=60,
+        risk_config=None,
     )
 
     def __init__(self):
+        self._init_risk()
         self.trend_ema = bt.ind.EMA(self.data.close, period=self.p.trend_len)
         self.atr = bt.ind.ATR(period=self.p.atr_len)
 
@@ -100,22 +103,30 @@ class EMAAccelerationBreakout(bt.Strategy):
                 accel_now = self._accel_long_active(0)
                 accel_prev = self._accel_long_active(-1)
                 if accel_now and not accel_prev:
-                    self.buy()
-                    self.entry_price = self.data.close[0]
-                    self.entry_atr = self.atr[0]
-                    self.stop_price = self.entry_price - self.p.stop_atr * self.entry_atr
-                    self.bars_in_trade = 0
-                    return
+                    entry_price = self.data.close[0]
+                    entry_atr = self.atr[0]
+                    stop_price = entry_price - self.p.stop_atr * entry_atr
+                    order = self._risk_buy(stop_price=stop_price, entry_price=entry_price)
+                    if order is not None:
+                        self.entry_price = entry_price
+                        self.entry_atr = entry_atr
+                        self.stop_price = stop_price
+                        self.bars_in_trade = 0
+                        return
             elif trend_direction == -1:
                 accel_now = self._accel_short_active(0)
                 accel_prev = self._accel_short_active(-1)
                 if accel_now and not accel_prev:
-                    self.sell()
-                    self.entry_price = self.data.close[0]
-                    self.entry_atr = self.atr[0]
-                    self.stop_price = self.entry_price + self.p.stop_atr * self.entry_atr
-                    self.bars_in_trade = 0
-                    return
+                    entry_price = self.data.close[0]
+                    entry_atr = self.atr[0]
+                    stop_price = entry_price + self.p.stop_atr * entry_atr
+                    order = self._risk_sell(stop_price=stop_price, entry_price=entry_price)
+                    if order is not None:
+                        self.entry_price = entry_price
+                        self.entry_atr = entry_atr
+                        self.stop_price = stop_price
+                        self.bars_in_trade = 0
+                        return
 
         if self.position and self._is_last_bar():
             self.close()
@@ -134,6 +145,7 @@ def run(
     atr_len=14,
     stop_atr=2.0,
     max_hold_bars=60,
+    risk_config=None,
 ):
     cerebro = bt.Cerebro()
     cerebro.addstrategy(
@@ -144,11 +156,11 @@ def run(
         atr_len=atr_len,
         stop_atr=stop_atr,
         max_hold_bars=max_hold_bars,
+        risk_config=risk_config,
     )
 
     cerebro.broker.setcash(1000)
     cerebro.broker.setcommission(commission=commission_)
-    cerebro.addsizer(bt.sizers.PercentSizer, percents=sizer)
 
     timeframe = interval_to_timeframe.get(interval, bt.TimeFrame.Days)
     cerebro.adddata(data)

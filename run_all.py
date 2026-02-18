@@ -1,10 +1,8 @@
 import backtrader as bt
-import datetime
 import pandas as pd
 from strategies import ALL_STRATEGIES
 from utils.results_logger import make_file
 import yaml
-import os
 from pathlib import Path
 from itertools import product
 import json
@@ -13,7 +11,7 @@ from tqdm import tqdm
 # --- 1. Setup Paths ---
 DATA_PROCESSED = Path("data") / "raw"
 RESULTS_PATH = Path("database/results.parquet")
-BACKTEST_VERSION = "long_short_v1"
+BACKTEST_VERSION = "long_short_risk_v3"
 
 # --- 2. Load or Create Results File ---
 if not RESULTS_PATH.exists():
@@ -24,6 +22,8 @@ if not RESULTS_PATH.exists():
 df = pd.read_parquet(RESULTS_PATH)
 if "backtest_version" not in df.columns:
     df["backtest_version"] = "legacy"
+if "risk_profile" not in df.columns:
+    df["risk_profile"] = "legacy"
 
 # --- 3. Load Config ---
 with open("config/config.yaml", "r") as f:
@@ -31,6 +31,8 @@ with open("config/config.yaml", "r") as f:
 
 commission = config['commission']
 sizer = config['sizer']
+risk_config = config.get("risk", {})
+risk_profile = json.dumps(risk_config, sort_keys=True)
 INTERVAL_TO_TIMEFRAME = config['INTERVAL_TO_TIMEFRAME']
 
 intervals = config['intervals']
@@ -305,7 +307,8 @@ for symbol in tqdm(all_symbols, desc="Backtesting Symbols"):
                         (df["symbol"] == symbol) &
                         (df["interval"] == interval) &
                         (df["parameters"] == param_key) &
-                        (df["backtest_version"] == BACKTEST_VERSION)
+                        (df["backtest_version"] == BACKTEST_VERSION) &
+                        (df["risk_profile"] == risk_profile)
                     ).any()
 
                     if exists:
@@ -326,7 +329,8 @@ for symbol in tqdm(all_symbols, desc="Backtesting Symbols"):
                     commission_=commission,
                     sizer=sizer,
                     interval=interval,
-                    interval_to_timeframe = INTERVAL_TO_TIMEFRAME,
+                    interval_to_timeframe=INTERVAL_TO_TIMEFRAME,
+                    risk_config=risk_config,
                     **param_dict)
                 
                 # --- ANALYZER EXTRACTION ---
@@ -363,6 +367,7 @@ for symbol in tqdm(all_symbols, desc="Backtesting Symbols"):
                     "market_gain": market_gain,
                     "excess_return": excess_return,
                     "backtest_version": BACKTEST_VERSION,
+                    "risk_profile": risk_profile,
                 }
 
                 all_new_results.append(new_result)

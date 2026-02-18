@@ -1,16 +1,19 @@
 import backtrader as bt
+from .risk_managed import RiskManagedMixin
 
 
-class InsideBarBreakoutContinuation(bt.Strategy):
+class InsideBarBreakoutContinuation(RiskManagedMixin, bt.Strategy):
     params = dict(
         trend_len=50,
         slope_lookback=5,
         atr_len=14,
         stop_atr=2.0,
         max_hold_bars=60,
+        risk_config=None,
     )
 
     def __init__(self):
+        self._init_risk()
         self.trend_ma = bt.ind.SMA(self.data.close, period=self.p.trend_len)
         self.atr = bt.ind.ATR(period=self.p.atr_len)
 
@@ -98,23 +101,31 @@ class InsideBarBreakoutContinuation(bt.Strategy):
                 and self._prev_is_inside_bar()
                 and self.data.close[0] > self.data.high[-1]
             ):
-                self.buy()
-                self.entry_price = self.data.close[0]
-                self.entry_atr = self.atr[0]
-                self.stop_price = self.entry_price - self.p.stop_atr * self.entry_atr
-                self.bars_in_trade = 0
-                return
+                entry_price = self.data.close[0]
+                entry_atr = self.atr[0]
+                stop_price = entry_price - self.p.stop_atr * entry_atr
+                order = self._risk_buy(stop_price=stop_price, entry_price=entry_price)
+                if order is not None:
+                    self.entry_price = entry_price
+                    self.entry_atr = entry_atr
+                    self.stop_price = stop_price
+                    self.bars_in_trade = 0
+                    return
             if (
                 trend_direction == -1
                 and self._prev_is_inside_bar()
                 and self.data.close[0] < self.data.low[-1]
             ):
-                self.sell()
-                self.entry_price = self.data.close[0]
-                self.entry_atr = self.atr[0]
-                self.stop_price = self.entry_price + self.p.stop_atr * self.entry_atr
-                self.bars_in_trade = 0
-                return
+                entry_price = self.data.close[0]
+                entry_atr = self.atr[0]
+                stop_price = entry_price + self.p.stop_atr * entry_atr
+                order = self._risk_sell(stop_price=stop_price, entry_price=entry_price)
+                if order is not None:
+                    self.entry_price = entry_price
+                    self.entry_atr = entry_atr
+                    self.stop_price = stop_price
+                    self.bars_in_trade = 0
+                    return
 
         if self.position and self._is_last_bar():
             self.close()
@@ -132,6 +143,7 @@ def run(
     atr_len=14,
     stop_atr=2.0,
     max_hold_bars=60,
+    risk_config=None,
 ):
     cerebro = bt.Cerebro()
     cerebro.addstrategy(
@@ -141,11 +153,11 @@ def run(
         atr_len=atr_len,
         stop_atr=stop_atr,
         max_hold_bars=max_hold_bars,
+        risk_config=risk_config,
     )
 
     cerebro.broker.setcash(1000)
     cerebro.broker.setcommission(commission=commission_)
-    cerebro.addsizer(bt.sizers.PercentSizer, percents=sizer)
 
     timeframe = interval_to_timeframe.get(interval, bt.TimeFrame.Days)
     cerebro.adddata(data)

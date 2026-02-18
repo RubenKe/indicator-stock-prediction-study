@@ -1,135 +1,287 @@
 stocks:
-  - AAPL
-  - MSFT
-  - AMZN
-
+- AAPL
+- MSFT
+- AMZN
 forex:
-  - "EURUSD=X"
-  - "GBPUSD=X"
-  - "AUDUSD=X"
-
+- EURUSD=X
+- GBPUSD=X
+- AUDUSD=X
 indices:
-  - "^GSPC"
-  - GLD
-  - USO
-
+- ^GSPC
+- GLD
+- USO
 intervals:
-  - 1d
-  - 1h
-  - 15m
-
+- 1d
+- 1h
+- 15m
 periods:
   1d: 1501d
   1h: 1y
   15m: 60d
-
 params:
   DMAC:
-    short_ema: [5, 10, 20, 50]
-    long_ema: [30, 200]
-    adx_period: [7, 14]
-    adx_threshold: [20]
-  
+    short_ema:
+    - 5
+    - 10
+    - 20
+    - 50
+    long_ema:
+    - 30
+    - 200
+    adx_period:
+    - 7
+    - 14
+    adx_threshold:
+    - 20
   RSI_MA:
-    ma: [50, 100, 200]
-    buy_rsi: [35, 40, 50]
-    sell_rsi: [35, 40, 50, 75]
-
+    ma:
+    - 50
+    - 100
+    - 200
+    buy_rsi:
+    - 35
+    - 40
+    - 50
+    sell_rsi:
+    - 35
+    - 40
+    - 50
+    - 75
   BBANDS_MR:
-    bb_len: [20, 30]
-    bb_k: [2.0, 2.5]
-    rsi_os: [30, 35]
-    adx_max: [20]
-    stop_atr: [1.5, 2.0]
-    max_hold_bars: [20]
-
+    bb_len:
+    - 20
+    - 30
+    bb_k:
+    - 2.0
+    - 2.5
+    rsi_os:
+    - 30
+    - 35
+    adx_max:
+    - 20
+    stop_atr:
+    - 1.5
+    - 2.0
+    max_hold_bars:
+    - 20
   DONCHIAN_BO:
-    entry_len: [20, 40]
-    exit_len: [10, 20]
-    atr_len: [14]
-    entry_buffer_atr: [0.0, 0.25]
-    stop_atr: [2.0]
-    trail_atr: [3.0]
-    max_hold_bars: [100]
-    cooldown_bars: [0, 5]
-
+    entry_len:
+    - 20
+    - 40
+    exit_len:
+    - 10
+    - 20
+    atr_len:
+    - 14
+    entry_buffer_atr:
+    - 0.0
+    - 0.25
+    stop_atr:
+    - 2.0
+    trail_atr:
+    - 3.0
+    max_hold_bars:
+    - 100
+    cooldown_bars:
+    - 0
+    - 5
   RSI_PULLBACK:
-    trend_len: [80, 100, 120]
-    slope_lookback: [5]
-    rsi_len: [14, 21]
-    rsi_pullback: [40]
-    rsi_recover: [50]
-    atr_len: [14]
-    stop_atr: [2.0]
-    max_hold_bars: [60]
+    trend_len:
+    - 80
+    - 100
+    - 120
+    slope_lookback:
+    - 5
+    rsi_len:
+    - 14
+    - 21
+    rsi_pullback:
+    - 40
+    rsi_recover:
+    - 50
+    atr_len:
+    - 14
+    stop_atr:
+    - 2.0
+    max_hold_bars:
+    - 60
   ATR_VOL_BO:
-    atr_len: [12, 14, 16]
-    atr_expansion_mult: [1.2, 1.3, 1.5]
-    stop_atr: [1.8, 2.0, 2.5]
-    breakout_len: [3]
-    max_hold_bars: [50]
+    atr_len:
+    - 12
+    - 14
+    - 16
+    atr_expansion_mult:
+    - 1.2
+    - 1.3
+    - 1.5
+    stop_atr:
+    - 1.8
+    - 2.0
+    - 2.5
+    breakout_len:
+    - 3
+    max_hold_bars:
+    - 50
   MA_TREND_CONT:
-    trend_len: [80, 100, 120]
-    slope_lookback: [3, 5, 8]
-    stop_atr: [1.8, 2.0, 2.5]
-    atr_len: [14]
-    max_hold_bars: [80]
-    momentum_exit: [True]
+    trend_len:
+    - 80
+    - 100
+    - 120
+    slope_lookback:
+    - 3
+    - 5
+    - 8
+    stop_atr:
+    - 1.8
+    - 2.0
+    - 2.5
+    atr_len:
+    - 14
+    max_hold_bars:
+    - 80
+    momentum_exit:
+    - true
   VWAP_RECLAIM:
-    vwap_period: [30, 50, 80]
-    slope_lookback: [3, 5, 8]
-    stop_atr: [1.8, 2.0, 2.5]
-    setup_lookback: [5]
-    atr_len: [14]
-    max_hold_bars: [80]
+    vwap_period:
+    - 30
+    - 50
+    - 80
+    slope_lookback:
+    - 3
+    - 5
+    - 8
+    stop_atr:
+    - 1.8
+    - 2.0
+    - 2.5
+    setup_lookback:
+    - 5
+    atr_len:
+    - 14
+    max_hold_bars:
+    - 80
   EMA_ACCEL_BO:
-    trend_len: [30, 50, 80]
-    slope_lookback: [5]
-    accel_mult: [0.75, 1.0, 1.25, 1.5]
-    stop_atr: [1.8, 2.0, 2.5]
-    atr_len: [14]
-    max_hold_bars: [60]
+    trend_len:
+    - 30
+    - 50
+    - 80
+    slope_lookback:
+    - 5
+    accel_mult:
+    - 0.75
+    - 1.0
+    - 1.25
+    - 1.5
+    stop_atr:
+    - 1.8
+    - 2.0
+    - 2.5
+    atr_len:
+    - 14
+    max_hold_bars:
+    - 60
   HHHL_STRUCT_BO:
-    swing_len: [3, 5, 8]
-    break_buffer: [0.2, 0.4, 0.6]
-    stop_buffer: [0.75, 1.0, 1.5]
-    atr_len: [14]
-    slope_lookback: [5]
-    range_mult: [1.0]
-    min_structure_size: [1.0]
-    atr_regime_exit: [False]
-    atr_collapse_mult: [0.7]
-    max_hold_bars: [60]
+    swing_len:
+    - 3
+    - 5
+    - 8
+    break_buffer:
+    - 0.2
+    - 0.4
+    - 0.6
+    stop_buffer:
+    - 0.75
+    - 1.0
+    - 1.5
+    atr_len:
+    - 14
+    slope_lookback:
+    - 5
+    range_mult:
+    - 1.0
+    min_structure_size:
+    - 1.0
+    atr_regime_exit:
+    - false
+    atr_collapse_mult:
+    - 0.7
+    max_hold_bars:
+    - 60
   MA200_PULLBACK:
-    long_len: [150, 200, 250]
-    short_len: [15, 20, 30]
-    stop_atr: [1.8, 2.0, 2.5]
-    atr_len: [14]
-    max_hold_bars: [60]
+    long_len:
+    - 150
+    - 200
+    - 250
+    short_len:
+    - 15
+    - 20
+    - 30
+    stop_atr:
+    - 1.8
+    - 2.0
+    - 2.5
+    atr_len:
+    - 14
+    max_hold_bars:
+    - 60
   INSIDE_BAR_CONT:
-    trend_len: [30, 50, 80]
-    slope_lookback: [3, 5, 8]
-    stop_atr: [1.5, 2.0, 2.5]
-    atr_len: [14]
-    max_hold_bars: [60]
+    trend_len:
+    - 30
+    - 50
+    - 80
+    slope_lookback:
+    - 3
+    - 5
+    - 8
+    stop_atr:
+    - 1.5
+    - 2.0
+    - 2.5
+    atr_len:
+    - 14
+    max_hold_bars:
+    - 60
   SMC_SWEEP_OBFVG:
-    pivot_L: [2, 3, 5]
-    eq_tol_atr: [0.1, 0.2, 0.3]
-    disp_atr: [0.8]
-    fvg_min_atr: [0.2, 0.3, 0.4]
-    atr_period: [14]
-    risk_per_trade: [0.005]
-    timeout_bars: [40]
-
+    pivot_L:
+    - 2
+    - 3
+    - 5
+    eq_tol_atr:
+    - 0.1
+    - 0.2
+    - 0.3
+    disp_atr:
+    - 0.8
+    fvg_min_atr:
+    - 0.2
+    - 0.3
+    - 0.4
+    atr_period:
+    - 14
+    risk_per_trade:
+    - 0.005
+    timeout_bars:
+    - 40
 INTERVAL_TO_TIMEFRAME:
-  "1m": Minutes
-  "5m": Minutes
-  "15m": Minutes
-  "30m": Minutes
-  "1h": Minutes
-  "4h": Minutes
-  "1d": Days
-  "1wk": Weeks
-
+  1m: Minutes
+  5m: Minutes
+  15m: Minutes
+  30m: Minutes
+  1h: Minutes
+  4h: Minutes
+  1d: Days
+  1wk: Weeks
 commission: 0.0
 sizer: 50
+risk:
+  risk_per_trade: 0.015
+  max_position_value_pct: 0.7
+  drawdown_step_1: 0.12
+  drawdown_step_2: 0.2
+  drawdown_mult_1: 0.6
+  drawdown_mult_2: 0.2
+  min_risk_per_trade: 0.001
+  min_stop_distance: 1.0e-08
+  min_trade_size: 1.0e-06
+  default_stop_atr: 2.0
+  atr_len_for_sizing: 14

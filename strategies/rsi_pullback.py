@@ -1,7 +1,8 @@
 import backtrader as bt
+from .risk_managed import RiskManagedMixin
 
 
-class RSIPullbackTrend(bt.Strategy):
+class RSIPullbackTrend(RiskManagedMixin, bt.Strategy):
     params = dict(
         trend_len=100,
         slope_lookback=5,
@@ -11,9 +12,11 @@ class RSIPullbackTrend(bt.Strategy):
         atr_len=14,
         stop_atr=2.0,
         max_hold_bars=100,
+        risk_config=None,
     )
 
     def __init__(self):
+        self._init_risk()
         self.trend_ma = bt.ind.SMA(self.data.close, period=self.p.trend_len)
         self.rsi = bt.ind.RSI(period=self.p.rsi_len)
         self.atr = bt.ind.ATR(period=self.p.atr_len)
@@ -100,13 +103,16 @@ class RSIPullbackTrend(bt.Strategy):
                     return
 
                 if self.long_pullback_armed and self.rsi[-1] <= self.p.rsi_recover < self.rsi[0]:
-                    self.buy()
-                    self.entry_price = self.data.close[0]
-                    self.stop_price = self.entry_price - self.p.stop_atr * self.atr[0]
-                    self.bars_in_trade = 0
-                    self.long_pullback_armed = False
-                    self.short_pullback_armed = False
-                    return
+                    entry_price = self.data.close[0]
+                    stop_price = entry_price - self.p.stop_atr * self.atr[0]
+                    order = self._risk_buy(stop_price=stop_price, entry_price=entry_price)
+                    if order is not None:
+                        self.entry_price = entry_price
+                        self.stop_price = stop_price
+                        self.bars_in_trade = 0
+                        self.long_pullback_armed = False
+                        self.short_pullback_armed = False
+                        return
 
             if trend_direction == -1:
                 if not self.short_pullback_armed and self.rsi[0] > short_pullback:
@@ -114,13 +120,16 @@ class RSIPullbackTrend(bt.Strategy):
                     return
 
                 if self.short_pullback_armed and self.rsi[-1] >= short_recover > self.rsi[0]:
-                    self.sell()
-                    self.entry_price = self.data.close[0]
-                    self.stop_price = self.entry_price + self.p.stop_atr * self.atr[0]
-                    self.bars_in_trade = 0
-                    self.short_pullback_armed = False
-                    self.long_pullback_armed = False
-                    return
+                    entry_price = self.data.close[0]
+                    stop_price = entry_price + self.p.stop_atr * self.atr[0]
+                    order = self._risk_sell(stop_price=stop_price, entry_price=entry_price)
+                    if order is not None:
+                        self.entry_price = entry_price
+                        self.stop_price = stop_price
+                        self.bars_in_trade = 0
+                        self.short_pullback_armed = False
+                        self.long_pullback_armed = False
+                        return
 
         if self.position and self._is_last_bar():
             self.close()
@@ -144,6 +153,7 @@ def run(
     atr_len=14,
     stop_atr=2.0,
     max_hold_bars=100,
+    risk_config=None,
 ):
     cerebro = bt.Cerebro()
     cerebro.addstrategy(
@@ -156,11 +166,11 @@ def run(
         atr_len=atr_len,
         stop_atr=stop_atr,
         max_hold_bars=max_hold_bars,
+        risk_config=risk_config,
     )
 
     cerebro.broker.setcash(1000)
     cerebro.broker.setcommission(commission=commission_)
-    cerebro.addsizer(bt.sizers.PercentSizer, percents=sizer)
 
     timeframe = interval_to_timeframe.get(interval, bt.TimeFrame.Days)
     cerebro.adddata(data)

@@ -1,7 +1,8 @@
 import backtrader as bt
+from .risk_managed import RiskManagedMixin
 
 
-class DonchianBreakout(bt.Strategy):
+class DonchianBreakout(RiskManagedMixin, bt.Strategy):
     params = dict(
         entry_len=20,
         exit_len=10,
@@ -11,9 +12,11 @@ class DonchianBreakout(bt.Strategy):
         trail_atr=3.0,
         max_hold_bars=200,
         cooldown_bars=0,
+        risk_config=None,
     )
 
     def __init__(self):
+        self._init_risk()
         self.dc_entry_high = bt.ind.Highest(self.data.high, period=self.p.entry_len)
         self.dc_entry_low = bt.ind.Lowest(self.data.low, period=self.p.entry_len)
         self.dc_exit_high = bt.ind.Highest(self.data.high, period=self.p.exit_len)
@@ -94,23 +97,29 @@ class DonchianBreakout(bt.Strategy):
             buffered_lower = lower_entry_prev - self.p.entry_buffer_atr * atr_now
 
             if close_prev <= upper_entry_prev and close_now > buffered_upper:
-                self.buy()
-                self.entry_price = close_now
-                self.entry_atr = atr_now
-                self.entry_bar = len(self)
-                self.highest_close = close_now
-                self.lowest_close = None
-                self.cooldown_end_bar = None
-                return
+                entry_price = close_now
+                stop_price = entry_price - self.p.stop_atr * atr_now
+                order = self._risk_buy(stop_price=stop_price, entry_price=entry_price)
+                if order is not None:
+                    self.entry_price = entry_price
+                    self.entry_atr = atr_now
+                    self.entry_bar = len(self)
+                    self.highest_close = close_now
+                    self.lowest_close = None
+                    self.cooldown_end_bar = None
+                    return
             if close_prev >= lower_entry_prev and close_now < buffered_lower:
-                self.sell()
-                self.entry_price = close_now
-                self.entry_atr = atr_now
-                self.entry_bar = len(self)
-                self.lowest_close = close_now
-                self.highest_close = None
-                self.cooldown_end_bar = None
-                return
+                entry_price = close_now
+                stop_price = entry_price + self.p.stop_atr * atr_now
+                order = self._risk_sell(stop_price=stop_price, entry_price=entry_price)
+                if order is not None:
+                    self.entry_price = entry_price
+                    self.entry_atr = atr_now
+                    self.entry_bar = len(self)
+                    self.lowest_close = close_now
+                    self.highest_close = None
+                    self.cooldown_end_bar = None
+                    return
 
         if self.position and self._is_last_bar():
             self.close()
@@ -134,6 +143,7 @@ def run(
     trail_atr=3.0,
     max_hold_bars=200,
     cooldown_bars=0,
+    risk_config=None,
 ):
     cerebro = bt.Cerebro()
     cerebro.addstrategy(
@@ -146,11 +156,11 @@ def run(
         trail_atr=trail_atr,
         max_hold_bars=max_hold_bars,
         cooldown_bars=cooldown_bars,
+        risk_config=risk_config,
     )
 
     cerebro.broker.setcash(1000)
     cerebro.broker.setcommission(commission=commission_)
-    cerebro.addsizer(bt.sizers.PercentSizer, percents=sizer)
 
     timeframe = interval_to_timeframe.get(interval, bt.TimeFrame.Days)
     cerebro.adddata(data)
