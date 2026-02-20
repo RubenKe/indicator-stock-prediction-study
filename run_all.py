@@ -136,6 +136,32 @@ def normalize_params(param_dict):
     return json.dumps(param_dict, sort_keys=True)
 
 
+def safe_nested_get(data, path, default=0.0):
+    current = data
+    for key in path:
+        if current is None:
+            return default
+        try:
+            if key in current:
+                current = current[key]
+            else:
+                return default
+        except TypeError:
+            return default
+    try:
+        return float(current)
+    except (TypeError, ValueError):
+        return default
+
+
+def annualized_return_pct(total_return_pct, start_dt, end_dt):
+    days = max((end_dt - start_dt).days, 1)
+    gross = 1.0 + (total_return_pct / 100.0)
+    if gross <= 0:
+        return -100.0
+    return ((gross ** (365.25 / days)) - 1.0) * 100.0
+
+
 def load_config():
     with open("config/config.yaml", "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
@@ -252,10 +278,35 @@ def extract_result_row(
 ):
     ta = result.analyzers.trades.get_analysis()
     sa = result.analyzers.sharpe.get_analysis()
+    da = result.analyzers.drawdown.get_analysis()
 
-    total_trades = ta.total.total if "total" in ta else 0
-    won_trades = ta.won.total if "won" in ta else 0
+    total_trades = int(safe_nested_get(ta, ["total", "closed"], 0.0))
+    won_trades = int(safe_nested_get(ta, ["won", "total"], 0.0))
     win_rate = (won_trades / total_trades) if total_trades > 0 else 0.0
+
+    long_trades = int(safe_nested_get(ta, ["long", "total"], 0.0))
+    short_trades = int(safe_nested_get(ta, ["short", "total"], 0.0))
+    long_won = int(safe_nested_get(ta, ["long", "won"], 0.0))
+    short_won = int(safe_nested_get(ta, ["short", "won"], 0.0))
+    long_win_rate = (long_won / long_trades) if long_trades > 0 else 0.0
+    short_win_rate = (short_won / short_trades) if short_trades > 0 else 0.0
+
+    gross_profit = safe_nested_get(ta, ["won", "pnl", "total"], 0.0)
+    gross_loss = safe_nested_get(ta, ["lost", "pnl", "total"], 0.0)
+    net_profit = safe_nested_get(ta, ["pnl", "net", "total"], 0.0)
+    avg_trade_pnl = safe_nested_get(ta, ["pnl", "net", "average"], 0.0)
+    avg_win_pnl = safe_nested_get(ta, ["won", "pnl", "average"], 0.0)
+    avg_loss_pnl = safe_nested_get(ta, ["lost", "pnl", "average"], 0.0)
+
+    if gross_loss < 0:
+        profit_factor = gross_profit / abs(gross_loss)
+    elif gross_profit > 0:
+        profit_factor = float("inf")
+    else:
+        profit_factor = 0.0
+
+    max_drawdown_pct = safe_nested_get(da, ["max", "drawdown"], 0.0)
+    max_moneydown = safe_nested_get(da, ["max", "moneydown"], 0.0)
 
     start_price = price_df["close"].iloc[0]
     end_price = price_df["close"].iloc[-1]
@@ -263,6 +314,10 @@ def extract_result_row(
 
     strategy_return = ((result.broker.getvalue() - STARTING_CASH) / STARTING_CASH) * 100
     excess_return = strategy_return - market_gain
+    start_date = pd.Timestamp(bt.num2date(result.data.datetime.array[0]))
+    end_date = pd.Timestamp(bt.num2date(result.data.datetime.array[-1]))
+    annualized_return = annualized_return_pct(strategy_return, start_date, end_date)
+    calmar = (annualized_return / max_drawdown_pct) if max_drawdown_pct > 0 else 0.0
 
     return {
         "strategy": strategy_name,
@@ -273,12 +328,27 @@ def extract_result_row(
         "sharpe": sa.get("sharperatio", 0) if sa.get("sharperatio") is not None else 0,
         "trades": total_trades,
         "win_rate": win_rate,
-        "start_date": pd.Timestamp(bt.num2date(result.data.datetime.array[0])),
-        "end_date": pd.Timestamp(bt.num2date(result.data.datetime.array[-1])),
+        "start_date": start_date,
+        "end_date": end_date,
         "commission": commission,
         "sizer": sizer,
         "market_gain": market_gain,
         "excess_return": excess_return,
+        "annualized_return": annualized_return,
+        "max_drawdown_pct": max_drawdown_pct,
+        "max_moneydown": max_moneydown,
+        "calmar": calmar,
+        "gross_profit": gross_profit,
+        "gross_loss": gross_loss,
+        "net_profit": net_profit,
+        "avg_trade_pnl": avg_trade_pnl,
+        "avg_win_pnl": avg_win_pnl,
+        "avg_loss_pnl": avg_loss_pnl,
+        "profit_factor": profit_factor,
+        "long_trades": long_trades,
+        "short_trades": short_trades,
+        "long_win_rate": long_win_rate,
+        "short_win_rate": short_win_rate,
         "backtest_version": BACKTEST_VERSION,
         "risk_profile": risk_profile,
     }
