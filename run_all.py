@@ -11,8 +11,10 @@ from strategies import ALL_STRATEGIES
 from utils.results_logger import make_file
 
 
-DATA_PROCESSED = Path("data") / "raw"
-RESULTS_PATH = Path("database/results.parquet")
+PROJECT_ROOT = Path(__file__).resolve().parent
+DATA_PROCESSED = PROJECT_ROOT / "data" / "raw"
+RESULTS_PATH = PROJECT_ROOT / "database" / "results.parquet"
+CONFIG_PATH = PROJECT_ROOT / "config" / "config.yaml"
 BACKTEST_VERSION = "long_short_risk_v3"
 STARTING_CASH = 1000
 
@@ -163,11 +165,14 @@ def annualized_return_pct(total_return_pct, start_dt, end_dt):
 
 
 def load_config():
-    with open("config/config.yaml", "r", encoding="utf-8") as f:
+    if not CONFIG_PATH.exists():
+        raise FileNotFoundError(f"Missing config file: {CONFIG_PATH}")
+    with open(CONFIG_PATH, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
 def load_or_init_results():
+    RESULTS_PATH.parent.mkdir(parents=True, exist_ok=True)
     if not RESULTS_PATH.exists():
         print("Making results file")
         make_file()
@@ -357,6 +362,10 @@ def extract_result_row(
 def run_backtests():
     df = load_or_init_results()
     config = load_config()
+    if not DATA_PROCESSED.exists():
+        raise FileNotFoundError(
+            f"Missing data directory: {DATA_PROCESSED}. Run utils/data_loader.py first."
+        )
 
     commission = config["commission"]
     sizer = config["sizer"]
