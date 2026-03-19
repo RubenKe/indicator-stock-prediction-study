@@ -285,3 +285,14 @@ risk:
   min_trade_size: 1.0e-06
   default_stop_atr: 2.0
   atr_len_for_sizing: 14
+ml:
+  test_candles: 1250
+  threshold_long: 0.55
+  threshold_short: 0.45
+  cv_splits: 5
+  cv_scoring: roc_auc
+  random_state: 42
+  feature_cache_dir: data/features
+  model_registry_dir: models/ml_registry
+  results_path: database/ml_results.parquet
+  experiment_version: loo_ml_v1

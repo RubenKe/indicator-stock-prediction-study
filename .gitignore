@@ -26,8 +26,10 @@ Thumbs.db
 # Data
 data/raw/
 data/processed/
+data/features/
 database/*.parquet
 analysis/results/
+models/ml_registry/
 
 # Python packaging
 *.egg
