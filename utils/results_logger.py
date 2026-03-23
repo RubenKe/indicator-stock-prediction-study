@@ -17,6 +17,7 @@ def make_file():
         "start_date",         # pd.Timestamp
         "end_date",           # pd.Timestamp
         "commission",         # commission in % per trade
+        "slippage",           # slippage in % per trade
         "sizer",              # % of capital used per trade
         "market_gain",        # % of market grown during trading period
         "excess_return",      # % difference of return to market gain

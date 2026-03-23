@@ -283,6 +283,7 @@ INTERVAL_TO_TIMEFRAME:
   1d: Days
   1wk: Weeks
 commission: 0.0
+slippage: 0.0005
 sizer: 50
 risk:
   risk_per_trade: 0.015

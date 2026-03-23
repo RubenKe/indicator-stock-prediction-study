@@ -505,6 +505,7 @@ def _infer_htf_resample(interval):
 def run(
     data,
     commission_,
+    slippage,
     sizer,
     interval,
     interval_to_timeframe,
@@ -537,6 +538,7 @@ def run(
 
     cerebro.broker.setcash(1000)
     cerebro.broker.setcommission(commission=commission_)
+    cerebro.broker.set_slippage_perc(perc=slippage)
     # Ensure end-of-data market exits are executed on the current close.
     cerebro.broker.set_coc(True)
 

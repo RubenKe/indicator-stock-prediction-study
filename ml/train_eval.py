@@ -112,6 +112,7 @@ def build_signal_frame(
     threshold_long: float,
     threshold_short: float,
     commission: float,
+    slippage: float,
     index: pd.Index | None = None,
 ) -> pd.DataFrame:
     probs = np.asarray(probabilities, dtype=float)
@@ -122,7 +123,7 @@ def build_signal_frame(
     returns = pd.Series(next_returns, index=index, dtype=float)
     gross_ret = position * returns
     turnover = position.diff().abs().fillna(position.abs())
-    cost = turnover * float(commission)
+    cost = turnover * float(commission + slippage)
     net_ret = gross_ret - cost
     equity_curve = (1.0 + net_ret).cumprod()
 
@@ -215,6 +216,7 @@ def evaluate_model_on_test(
         threshold_long=run_cfg.threshold_long,
         threshold_short=run_cfg.threshold_short,
         commission=run_cfg.commission,
+        slippage=run_cfg.slippage,
         index=test_df.index,
     )
     metrics = _compute_backtest_metrics(

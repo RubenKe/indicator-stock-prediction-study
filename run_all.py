@@ -15,7 +15,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 DATA_PROCESSED = PROJECT_ROOT / "data" / "raw"
 RESULTS_PATH = PROJECT_ROOT / "database" / "results.parquet"
 CONFIG_PATH = PROJECT_ROOT / "config" / "config.yaml"
-BACKTEST_VERSION = "long_short_risk_v3"
+BACKTEST_VERSION = "long_short_risk_v4_slippage"
 STARTING_CASH = 1000
 
 BT_TIMEFRAME_MAP = {
@@ -252,6 +252,7 @@ def run_single_backtest(
     param_dict,
     price_df,
     commission,
+    slippage,
     sizer,
     interval,
     interval_to_timeframe,
@@ -262,6 +263,7 @@ def run_single_backtest(
     return run_fn(
         data=data_feed,
         commission_=commission,
+        slippage=slippage,
         sizer=sizer,
         interval=interval,
         interval_to_timeframe=interval_to_timeframe,
@@ -278,6 +280,7 @@ def extract_result_row(
     result,
     price_df,
     commission,
+    slippage,
     sizer,
     risk_profile,
 ):
@@ -336,6 +339,7 @@ def extract_result_row(
         "start_date": start_date,
         "end_date": end_date,
         "commission": commission,
+        "slippage": slippage,
         "sizer": sizer,
         "market_gain": market_gain,
         "excess_return": excess_return,
@@ -368,6 +372,7 @@ def run_backtests():
         )
 
     commission = config["commission"]
+    slippage = float(config.get("slippage", 0.0))
     sizer = config["sizer"]
     risk_config = config.get("risk", {})
     risk_profile = json.dumps(risk_config, sort_keys=True)
@@ -416,6 +421,7 @@ def run_backtests():
                         param_dict=param_dict,
                         price_df=price_df,
                         commission=commission,
+                        slippage=slippage,
                         sizer=sizer,
                         interval=interval,
                         interval_to_timeframe=interval_to_timeframe,
@@ -429,6 +435,7 @@ def run_backtests():
                         result=result,
                         price_df=price_df,
                         commission=commission,
+                        slippage=slippage,
                         sizer=sizer,
                         risk_profile=risk_profile,
                     )

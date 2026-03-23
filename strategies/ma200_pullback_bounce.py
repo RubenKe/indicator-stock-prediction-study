@@ -146,6 +146,7 @@ class MA200PullbackBounce(RiskManagedMixin, bt.Strategy):
 def run(
     data,
     commission_,
+    slippage,
     sizer,
     interval,
     interval_to_timeframe,
@@ -170,6 +171,7 @@ def run(
     cerebro.broker.setcash(1000)
     cerebro.broker.setcommission(commission=commission_)
 
+    cerebro.broker.set_slippage_perc(perc=slippage)
     timeframe = interval_to_timeframe.get(interval, bt.TimeFrame.Days)
     cerebro.adddata(data)
 

@@ -103,6 +103,7 @@ All core settings live in `config/config.yaml`:
 - Instruments: `stocks`, `forex`, `indices`, `crypto`
 - Time intervals: `intervals` and `periods`
 - Strategy parameter grids: `params`
+- Execution costs: `commission`, `slippage`
 - Risk sizing settings: `risk`
 - ML settings: `ml`
 
@@ -115,6 +116,7 @@ All core settings live in `config/config.yaml`:
 - Raw price CSVs in `data/raw/*.csv` (created by `utils/data_loader.py`).
 - Strategy definitions in `strategies/`.
 - Parameter grids from `config/config.yaml`.
+- Execution costs from `commission` and `slippage`.
 
 **Run**
 
@@ -193,7 +195,7 @@ python run_ml.py run --test-dataset AAPL_1d --models logistic,random_forest
 3. Models train on all datasets except one and validate with GroupKFold.
 4. The held-out dataset is used for final testing.
 5. Model probabilities are turned into signals using `threshold_long` / `threshold_short`.
-6. The signal stream is backtested to produce trading metrics.
+6. The signal stream is backtested with `commission` and `slippage` costs.
 
 **Notes**
 

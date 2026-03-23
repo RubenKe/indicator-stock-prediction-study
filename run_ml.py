@@ -102,6 +102,7 @@ def build_run_config(cfg: dict, seed_override: int | None = None) -> RunConfig:
         ),
         experiment_version=str(ml_cfg.get("experiment_version", "loo_ml_v1")),
         commission=float(cfg.get("commission", 0.0)),
+        slippage=float(cfg.get("slippage", 0.0)),
     )
 
 
@@ -167,6 +168,7 @@ def _run_for_test_dataset(
             "threshold_long": run_cfg.threshold_long,
             "threshold_short": run_cfg.threshold_short,
             "commission": run_cfg.commission,
+            "slippage": run_cfg.slippage,
             "train_datasets": sorted(train_ids),
             "test_candles": run_cfg.test_candles,
         }
@@ -213,6 +215,7 @@ def _run_for_test_dataset(
             "threshold_long": run_cfg.threshold_long,
             "threshold_short": run_cfg.threshold_short,
             "commission": run_cfg.commission,
+            "slippage": run_cfg.slippage,
             "metrics": metrics,
         }
 
@@ -251,6 +254,7 @@ def _run_for_test_dataset(
             "threshold_long": run_cfg.threshold_long,
             "threshold_short": run_cfg.threshold_short,
             "commission": run_cfg.commission,
+            "slippage": run_cfg.slippage,
             "total_return_pct": metrics["total_return_pct"],
             "buy_hold_return_pct": metrics["buy_hold_return_pct"],
             "excess_return_pct": metrics["excess_return_pct"],

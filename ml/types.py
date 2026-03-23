@@ -25,6 +25,7 @@ class RunConfig:
     results_path: Path
     experiment_version: str
     commission: float
+    slippage: float
 
 
 @dataclass
