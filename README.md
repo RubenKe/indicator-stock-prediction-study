@@ -26,7 +26,7 @@ A reproducible research framework to evaluate classic technical strategies and M
 
 - Trains models to predict next-candle direction.
 - Leave-one-dataset-out evaluation.
-- Results: `database/ml_results.parquet` and `analysis/results/ml/`.
+- Results: a summary table and per-candle predictions.
 - Graded on prediction metrics (ROC AUC, accuracy) and trading metrics.
 
 ---
