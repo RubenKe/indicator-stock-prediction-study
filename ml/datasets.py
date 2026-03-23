@@ -70,10 +70,13 @@ def prepare_feature_cache(
     feature_cache_dir: Path,
     test_candles: int,
     force: bool = False,
+    exclude_symbols: set[str] | None = None,
 ) -> dict:
     specs = discover_raw_datasets(data_dir)
     if not specs:
         raise RuntimeError(f"No CSV datasets found in {data_dir}")
+
+    exclude_symbols = exclude_symbols or set()
 
     if force and feature_cache_dir.exists():
         shutil.rmtree(feature_cache_dir)
@@ -82,6 +85,18 @@ def prepare_feature_cache(
     dataset_manifest_rows = []
     skipped_rows = []
     for spec in specs:
+        if spec.symbol in exclude_symbols:
+            skipped_rows.append(
+                {
+                    "dataset_id": spec.dataset_id,
+                    "symbol": spec.symbol,
+                    "interval": spec.interval,
+                    "raw_file": spec.raw_path.name,
+                    "raw_rows": None,
+                    "reason": "Excluded by config",
+                }
+            )
+            continue
         raw_df = load_raw_ohlcv(spec)
         try:
             featured = build_feature_frame(
@@ -144,6 +159,7 @@ def ensure_feature_cache(
     feature_cache_dir: Path,
     test_candles: int,
     force: bool = False,
+    exclude_symbols: set[str] | None = None,
 ) -> dict:
     manifest_path = _manifest_path(feature_cache_dir)
     if force or not manifest_path.exists():
@@ -152,6 +168,7 @@ def ensure_feature_cache(
             feature_cache_dir=feature_cache_dir,
             test_candles=test_candles,
             force=force,
+            exclude_symbols=exclude_symbols,
         )
     return load_feature_manifest(feature_cache_dir)
 

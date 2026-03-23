@@ -201,6 +201,7 @@ python run_ml.py run --test-dataset AAPL_1d --models logistic,random_forest
 
 - The ML feature cache keeps the most recent `ml.test_candles` rows per dataset.
 - Datasets that do not have enough rows are skipped and recorded in `data/features/manifest.json`.
+- Crypto symbols are excluded from ML by default (to avoid short history issues).
 - Training requires at least 2 datasets after filtering (GroupKFold).
 
 ---

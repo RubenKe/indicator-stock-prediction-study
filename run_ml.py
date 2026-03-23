@@ -126,12 +126,13 @@ def _make_run_id(seed: int, profile: str, model_names: list[str]) -> str:
     return f"ml_{timestamp}_models-{models_tag}_seed-{seed}_{hash_suffix}"
 
 
-def prepare_cache(run_cfg: RunConfig, force: bool) -> dict:
+def prepare_cache(run_cfg: RunConfig, force: bool, exclude_symbols: set[str] | None = None) -> dict:
     manifest = ensure_feature_cache(
         data_dir=DATA_RAW_DIR,
         feature_cache_dir=run_cfg.feature_cache_dir,
         test_candles=run_cfg.test_candles,
         force=force,
+        exclude_symbols=exclude_symbols,
     )
     print(
         f"Prepared feature cache at {run_cfg.feature_cache_dir} "
@@ -280,7 +281,8 @@ def _run_for_test_dataset(
 def cmd_prepare(args):
     cfg = load_config()
     run_cfg = build_run_config(cfg)
-    prepare_cache(run_cfg, force=args.force)
+    exclude_symbols = set(cfg.get("crypto", []))
+    prepare_cache(run_cfg, force=args.force, exclude_symbols=exclude_symbols)
 
 
 def _run_workflow(
@@ -344,7 +346,8 @@ def cmd_run(args):
     run_cfg = build_run_config(cfg, seed_override=args.seed)
     model_names = parse_model_list(args.models)
     profile = validate_profile(args.profile)
-    prepare_cache(run_cfg, force=False)
+    exclude_symbols = set(cfg.get("crypto", []))
+    prepare_cache(run_cfg, force=False, exclude_symbols=exclude_symbols)
 
     _run_workflow(
         run_cfg=run_cfg,
@@ -363,7 +366,8 @@ def cmd_run_all(args):
     model_names = parse_model_list(args.models)
     profile = validate_profile(args.profile)
 
-    manifest = prepare_cache(run_cfg, force=False)
+    exclude_symbols = set(cfg.get("crypto", []))
+    manifest = prepare_cache(run_cfg, force=False, exclude_symbols=exclude_symbols)
     test_datasets = sorted([d["dataset_id"] for d in manifest["datasets"]])
     if args.max_tests > 0:
         test_datasets = test_datasets[: args.max_tests]
