@@ -86,6 +86,22 @@ All core settings live in `config/config.yaml`:
 
 ---
 
+## Classic vs ML (AI)
+
+**Classic (rule-based)**
+
+- Uses fixed strategy rules defined in `strategies/`.
+- No training phase; results are produced directly by backtesting the rules.
+- Output is written to `database/results.parquet`.
+
+**ML (AI)**
+
+- Trains models to predict next-candle direction from engineered features.
+- Uses leave-one-dataset-out evaluation: train on all datasets except one, test on the held-out dataset.
+- Output is written to `database/ml_results.parquet` and `analysis/results/ml/`.
+
+---
+
 ## Classic Backtesting Pipeline
 
 **Inputs**
@@ -158,6 +174,12 @@ python run_ml.py run-all
 python run_ml.py run --test-dataset AAPL_1d --models logistic,random_forest
 ```
 
+**Models used**
+
+- `logistic`: logistic regression baseline (linear, fast, interpretable).
+- `random_forest`: ensemble of decision trees (non-linear, robust).
+- `gradient_boosting`: boosted trees (strong accuracy, more sensitive to tuning).
+
 **Notes**
 
 - The ML feature cache keeps the most recent `ml.test_candles` rows per dataset.
@@ -171,28 +193,40 @@ python run_ml.py run --test-dataset AAPL_1d --models logistic,random_forest
 | Path | Description |
 | --- | --- |
 | `data/raw/*.csv` | Raw OHLCV data downloaded from `yfinance`. |
-| `database/results.parquet` | Classic backtest results. |
+| `database/results.parquet` | Classic backtest results (created by `python run_all.py`). |
 | `analysis/results/*.csv` | Exported analysis results from experiments. |
-| `data/features/*.parquet` | Feature cache for ML. |
-| `data/features/manifest.json` | Feature metadata and dataset inventory. |
+| `data/features/*.parquet` | Feature cache for ML (created by `python run_ml.py prepare`). |
+| `data/features/manifest.json` | Feature metadata and dataset inventory (created by `python run_ml.py prepare`). |
 | `models/ml_registry/{run_id}/{test_dataset}/{model_name}/model.joblib` | Trained ML model artifact. |
 | `models/ml_registry/{run_id}/{test_dataset}/{model_name}/metadata.json` | Run metadata and hyperparameters. |
-| `analysis/results/ml/{run_id}/{test_dataset}_{model_name}.csv` | Per-candle ML predictions and signals. |
-| `analysis/results/ml/{run_id}/summary.csv` | ML run summary. |
-| `database/ml_results.parquet` | Aggregated ML metrics. |
+| `analysis/results/ml/{run_id}/{test_dataset}_{model_name}.csv` | Per-candle ML predictions and signals (created by `python run_ml.py run` / `run-all`). |
+| `analysis/results/ml/{run_id}/summary.csv` | ML run summary (created by `python run_ml.py run` / `run-all`). |
+| `database/ml_results.parquet` | Aggregated ML metrics (created by `python run_ml.py run` / `run-all`). |
 
 ---
 
 ## Project Layout
 
-| Path | Purpose |
-| --- | --- |
-| `utils/data_loader.py` | Downloads data from `yfinance` into `data/raw/`. |
-| `strategies/` | Rule-based trading strategies. |
-| `run_all.py` | Runs the parameter grid backtests. |
-| `run_ml.py` | ML training and evaluation CLI. |
-| `ml/` | Feature engineering, models, evaluation logic, persistence. |
-| `analysis/results_analyser.ipynb` | Notebook for exploring results. |
+**Directories**
+
+- `analysis/`: notebooks and exported analysis results.
+- `config/`: configuration files (symbols, intervals, params, ML settings).
+- `data/`: local datasets.
+- `data/raw/`: downloaded OHLCV CSVs from `yfinance`.
+- `data/features/`: ML feature cache and `manifest.json`.
+- `database/`: parquet result stores (classic and ML).
+- `ml/`: feature engineering, model definitions, training, evaluation, persistence.
+- `models/`: saved ML model artifacts.
+- `strategies/`: rule-based strategy implementations.
+- `tests/`: tests (if present).
+- `utils/`: data loading, logging, and helper scripts.
+
+**Key files**
+
+- `utils/data_loader.py`: downloads data into `data/raw/`.
+- `run_all.py`: runs classic strategy backtests over the parameter grid.
+- `run_ml.py`: ML training and evaluation CLI.
+- `analysis/results_analyser.ipynb`: notebook for exploring results.
 
 ---
 
