@@ -1,21 +1,32 @@
 stocks:
-- AAPL
-- MSFT
-- AMZN
+  - AAPL
+  - MSFT
+  - AMZN
+  - GOOGL       # veel geschiedenis, stabiel
+  - JPM         # financiële sector, ander gedrag
+
 forex:
-- EURUSD=X
-- GBPUSD=X
-- AUDUSD=X
+  - EURUSD=X
+  - GBPUSD=X
+  - AUDUSD=X
+  - JPYUSD=X    # yen, ander karakter dan EUR/GBP
+
 indices:
-- ^GSPC
-- GLD
-- USO
+  - ^GSPC       # S&P 500
+  - ^DJI        # Dow Jones
+  - GLD         # goud
+  - USO         # olie
+
+crypto:
+  - BTC-USD     # ~4000 rijen, meeste geschiedenis
+  - ETH-USD     # ~3200 rijen
+
 intervals:
 - 1d
-- 1h
-- 15m
+#- 1h
+#- 15m
 periods:
-  1d: 1501d
+  1d: 5000d
   1h: 1y
   15m: 60d
 params:
@@ -286,7 +297,7 @@ risk:
   default_stop_atr: 2.0
   atr_len_for_sizing: 14
 ml:
-  test_candles: 1250
+  test_candles: 5000
   threshold_long: 0.55
   threshold_short: 0.45
   cv_splits: 5

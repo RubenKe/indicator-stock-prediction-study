@@ -192,4 +192,4 @@ python run_ml.py run --test-dataset AAPL_15m --models logistic,random_forest
 
 - This project is for research only. It is not a live trading system.
 - Results depend on the data window defined in `config/config.yaml`.
-- `utils/data_loader.py` truncates each dataset to the most recent 1500 rows so all datasets have equal length.
+- `utils/data_loader.py` truncates each dataset to the most recent 5000 rows so all datasets have equal length.

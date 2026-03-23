@@ -378,7 +378,12 @@ def run_backtests():
 
     interval_to_timeframe = build_interval_to_timeframe(config["INTERVAL_TO_TIMEFRAME"])
     intervals = config["intervals"]
-    all_symbols = config["stocks"] + config["forex"] + config["indices"]
+    all_symbols = (
+        config["stocks"]
+        + config["forex"]
+        + config["indices"]
+        + config.get("crypto", [])
+    )
 
     existing_run_keys = build_existing_run_keys(df)
     all_new_results = []

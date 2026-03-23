@@ -5,7 +5,8 @@ import pandas as pd
 import yaml
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-DATA_PROCESSED = PROJECT_ROOT / "data" / "raw"
+DATA_ROOT = PROJECT_ROOT / "data"
+DATA_PROCESSED = DATA_ROOT / "raw"
 CONFIG_PATH = PROJECT_ROOT / "config" / "config.yaml"
 
 with open(CONFIG_PATH, "r") as f:
@@ -15,6 +16,7 @@ with open(CONFIG_PATH, "r") as f:
 stocks_pairs = config["stocks"]
 forex_pairs = config["forex"]
 index_pairs = config["indices"]
+crypto_pairs = config.get("crypto", [])
 
 intervals = config["intervals"]
 periods = config["periods"]
@@ -29,15 +31,15 @@ def download_pair(pair: str, interval: str) -> pd.DataFrame:
     data.columns = data.columns.str.lower()
 
     
-    return data.tail(1500) # Keep the most recent 1500 rows so all df are equal in lenght
+    return data.tail(5000) # Keep the most recent 5000 rows so all df are equal in length
 
 # Cleanup and directory creation
-if DATA_PROCESSED.exists():
-    shutil.rmtree(DATA_PROCESSED)
+if DATA_ROOT.exists():
+    shutil.rmtree(DATA_ROOT)
 DATA_PROCESSED.mkdir(parents=True, exist_ok=True)
 
 # Main loop
-for pair in (stocks_pairs + forex_pairs + index_pairs):
+for pair in (stocks_pairs + forex_pairs + index_pairs + crypto_pairs):
     for interval in intervals:
 
         # Save with index=True to keep the proper Datetime Index
