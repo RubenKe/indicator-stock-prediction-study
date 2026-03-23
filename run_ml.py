@@ -114,13 +114,16 @@ def _relative(path: Path) -> str:
 
 
 def _make_run_id(seed: int, profile: str, model_names: list[str]) -> str:
+    timestamp = utc_now_compact()
     payload = {
         "seed": seed,
         "profile": profile,
         "models": sorted(model_names),
-        "timestamp": utc_now_compact(),
+        "timestamp": timestamp,
     }
-    return f"ml_{utc_now_compact()}_{stable_hash(payload, length=8)}"
+    models_tag = "-".join(sorted(model_names))
+    hash_suffix = stable_hash(payload, length=8)
+    return f"ml_{timestamp}_models-{models_tag}_seed-{seed}_{hash_suffix}"
 
 
 def prepare_cache(run_cfg: RunConfig, force: bool) -> dict:

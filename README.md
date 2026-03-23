@@ -260,6 +260,19 @@ python run_ml.py run --test-dataset AAPL_1d --models logistic,random_forest
 
 ---
 
+## ML Run Folder Names
+
+Each ML run is saved under `models/ml_registry/{run_id}/` and `analysis/results/ml/{run_id}/`.
+The `run_id` is human-readable and includes a timestamp, model list, seed, and a short hash.
+
+Example:
+
+```
+ml_20260323T112233Z_models-logistic-random_forest_seed-42_a1b2c3d4
+```
+
+---
+
 ## Notes
 
 - This project is for research only. It is not a live trading system.
