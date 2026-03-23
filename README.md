@@ -47,6 +47,8 @@ pip install -r requirments.txt
 python utils/data_loader.py
 ```
 
+Note: the loader clears the entire `data/` folder before downloading, so it will remove any cached ML features.
+
 5. Run the classic strategy backtests.
 
 ```bash
@@ -57,7 +59,7 @@ python run_all.py
 
 ```bash
 python run_ml.py prepare
-python run_ml.py run --test-dataset AAPL_15m
+python run_ml.py run --test-dataset AAPL_1d
 ```
 
 Run all datasets:
@@ -76,7 +78,7 @@ python run_ml.py run-all
 
 All core settings live in `config/config.yaml`:
 
-- Instruments: `stocks`, `forex`, `indices`
+- Instruments: `stocks`, `forex`, `indices`, `crypto`
 - Time intervals: `intervals` and `periods`
 - Strategy parameter grids: `params`
 - Risk sizing settings: `risk`
@@ -141,7 +143,7 @@ python run_ml.py prepare --force
 **Run a single test dataset**
 
 ```bash
-python run_ml.py run --test-dataset AAPL_15m
+python run_ml.py run --test-dataset AAPL_1d
 ```
 
 **Run all datasets**
@@ -153,8 +155,14 @@ python run_ml.py run-all
 **Model selection**
 
 ```bash
-python run_ml.py run --test-dataset AAPL_15m --models logistic,random_forest
+python run_ml.py run --test-dataset AAPL_1d --models logistic,random_forest
 ```
+
+**Notes**
+
+- The ML feature cache keeps the most recent `ml.test_candles` rows per dataset.
+- Datasets that do not have enough rows are skipped and recorded in `data/features/manifest.json`.
+- Training requires at least 2 datasets after filtering (GroupKFold).
 
 ---
 
