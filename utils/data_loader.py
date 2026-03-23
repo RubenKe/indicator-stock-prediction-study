@@ -34,9 +34,9 @@ def download_pair(pair: str, interval: str) -> pd.DataFrame:
     return data.tail(5000) # Keep the most recent 5000 rows so all df are equal in length
 
 # Cleanup and directory creation
-if DATA_ROOT.exists():
-    shutil.rmtree(DATA_ROOT)
 DATA_PROCESSED.mkdir(parents=True, exist_ok=True)
+for csv_path in DATA_PROCESSED.glob("*.csv"):
+    csv_path.unlink(missing_ok=True)
 
 # Main loop
 for pair in (stocks_pairs + forex_pairs + index_pairs + crypto_pairs):

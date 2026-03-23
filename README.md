@@ -33,29 +33,29 @@ macOS/Linux:
 source .venv/bin/activate
 ```
 
-2. Install dependencies. Note the filename is `requirments.txt` in this repo.
+2. Install dependencies. This sets up all required Python packages.
 
 ```bash
-pip install -r requirments.txt
+pip install -r requirements.txt
 ```
 
-3. Configure instruments, intervals, and parameters in `config/config.yaml`.
+3. Configure instruments, intervals, and parameters in `config/config.yaml`. This controls what markets and timeframes are tested.
 
-4. Download price data into `data/raw/`.
+4. Download price data into `data/raw/`. This fetches the latest OHLCV data for your config.
 
 ```bash
 python utils/data_loader.py
 ```
 
-Note: the loader clears the entire `data/` folder before downloading, so it will remove any cached ML features.
+Note: the loader only clears `data/raw` (the downloaded market data), not cached ML features.
 
-5. Run the classic strategy backtests.
+5. Run the classic strategy backtests. This evaluates every rule-based strategy across your config grid.
 
 ```bash
 python run_all.py
 ```
 
-6. Run the ML pipeline (leave-one-dataset-out).
+6. Run the ML pipeline (leave-one-dataset-out). This trains ML models on all datasets except one, then tests on the held-out dataset.
 
 ```bash
 python run_ml.py prepare
