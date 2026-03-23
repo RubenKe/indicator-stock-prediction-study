@@ -13,6 +13,24 @@ A reproducible research framework to evaluate classic technical strategies and M
 
 ---
 
+## At A Glance
+
+**Classic (rule-based)**
+
+- Deterministic strategy rules.
+- No training phase.
+- Results: `database/results.parquet`.
+- Graded on trading metrics (return, sharpe, drawdown, win rate, trades).
+
+**ML (AI)**
+
+- Trains models to predict next-candle direction.
+- Leave-one-dataset-out evaluation.
+- Results: `database/ml_results.parquet` and `analysis/results/ml/`.
+- Graded on prediction metrics (ROC AUC, accuracy) and trading metrics.
+
+---
+
 ## Quickstart
 
 1. Create a virtual environment (optional but recommended).
@@ -47,13 +65,15 @@ pip install -r requirements.txt
 python utils/data_loader.py
 ```
 
-Note: the loader only clears `data/raw` (the downloaded market data), not cached ML features.
+This clears only `data/raw` (downloaded market data), not cached ML features.
 
 5. Run the classic strategy backtests. This evaluates every rule-based strategy across your config grid.
 
 ```bash
 python run_all.py
 ```
+
+You should see `database/results.parquet` updated or created.
 
 6. Run the ML pipeline (leave-one-dataset-out). This trains ML models on all datasets except one, then tests on the held-out dataset.
 
@@ -67,6 +87,8 @@ Run all datasets:
 ```bash
 python run_ml.py run-all
 ```
+
+You should see `data/features/manifest.json`, `database/ml_results.parquet`, and `analysis/results/ml/`.
 
 7. Analyze results in the notebook:
 
@@ -83,22 +105,6 @@ All core settings live in `config/config.yaml`:
 - Strategy parameter grids: `params`
 - Risk sizing settings: `risk`
 - ML settings: `ml`
-
----
-
-## Classic vs ML (AI)
-
-**Classic (rule-based)**
-
-- Uses fixed strategy rules defined in `strategies/`.
-- No training phase; results are produced directly by backtesting the rules.
-- Output is written to `database/results.parquet`.
-
-**ML (AI)**
-
-- Trains models to predict next-candle direction from engineered features.
-- Uses leave-one-dataset-out evaluation: train on all datasets except one, test on the held-out dataset.
-- Output is written to `database/ml_results.parquet` and `analysis/results/ml/`.
 
 ---
 
@@ -180,6 +186,15 @@ python run_ml.py run --test-dataset AAPL_1d --models logistic,random_forest
 - `random_forest`: ensemble of decision trees (non-linear, robust).
 - `gradient_boosting`: boosted trees (strong accuracy, more sensitive to tuning).
 
+**How the AI works**
+
+1. Features are engineered from OHLCV data (`ml/features.py`).
+2. The target label is whether the next candle return is positive (`y`).
+3. Models train on all datasets except one and validate with GroupKFold.
+4. The held-out dataset is used for final testing.
+5. Model probabilities are turned into signals using `threshold_long` / `threshold_short`.
+6. The signal stream is backtested to produce trading metrics.
+
 **Notes**
 
 - The ML feature cache keeps the most recent `ml.test_candles` rows per dataset.
@@ -187,6 +202,19 @@ python run_ml.py run --test-dataset AAPL_1d --models logistic,random_forest
 - Training requires at least 2 datasets after filtering (GroupKFold).
 
 ---
+
+## When Results Are Produced
+
+**Classic results**
+
+- Created by `python run_all.py`.
+- Written to `database/results.parquet`.
+
+**ML results**
+
+- Feature cache created by `python run_ml.py prepare`.
+- Model runs created by `python run_ml.py run` or `python run_ml.py run-all`.
+- Written to `database/ml_results.parquet` and `analysis/results/ml/`.
 
 ## Outputs And Artifacts
 
