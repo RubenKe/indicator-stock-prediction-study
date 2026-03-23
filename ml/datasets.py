@@ -80,15 +80,29 @@ def prepare_feature_cache(
     feature_cache_dir.mkdir(parents=True, exist_ok=True)
 
     dataset_manifest_rows = []
+    skipped_rows = []
     for spec in specs:
         raw_df = load_raw_ohlcv(spec)
-        featured = build_feature_frame(
-            raw_df=raw_df,
-            dataset_id=spec.dataset_id,
-            symbol=spec.symbol,
-            interval=spec.interval,
-            test_candles=test_candles,
-        )
+        try:
+            featured = build_feature_frame(
+                raw_df=raw_df,
+                dataset_id=spec.dataset_id,
+                symbol=spec.symbol,
+                interval=spec.interval,
+                test_candles=test_candles,
+            )
+        except ValueError as exc:
+            skipped_rows.append(
+                {
+                    "dataset_id": spec.dataset_id,
+                    "symbol": spec.symbol,
+                    "interval": spec.interval,
+                    "raw_file": spec.raw_path.name,
+                    "raw_rows": int(len(raw_df)),
+                    "reason": str(exc),
+                }
+            )
+            continue
 
         feature_file = f"{spec.dataset_id}.parquet"
         feature_path = feature_cache_dir / feature_file
@@ -116,6 +130,7 @@ def prepare_feature_cache(
         "target_column": "y",
         "return_column": "next_return",
         "datasets": dataset_manifest_rows,
+        "skipped": skipped_rows,
     }
     manifest_path = _manifest_path(feature_cache_dir)
     with open(manifest_path, "w", encoding="utf-8") as f:
