@@ -19,6 +19,7 @@ A reproducible research framework to evaluate classic technical strategies and M
 
 - Deterministic strategy rules.
 - No training phase.
+- Currently testing 13 rule-based strategies (see `config/config.yaml` `params`).
 - Results: `database/results.parquet`.
 - Graded on trading metrics (return, sharpe, drawdown, win rate, trades).
 
