@@ -282,7 +282,7 @@ INTERVAL_TO_TIMEFRAME:
   4h: Minutes
   1d: Days
   1wk: Weeks
-commission: 0.0
+commission: 0.0005
 slippage: 0.0005
 sizer: 50
 risk:
