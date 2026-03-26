@@ -17,6 +17,7 @@ stocks_pairs = config["stocks"]
 forex_pairs = config["forex"]
 index_pairs = config["indices"]
 crypto_pairs = config.get("crypto", [])
+benchmark_symbol = config.get("benchmark_symbol")
 
 intervals = config["intervals"]
 periods = config["periods"]
@@ -38,8 +39,16 @@ DATA_PROCESSED.mkdir(parents=True, exist_ok=True)
 for csv_path in DATA_PROCESSED.glob("*.csv"):
     csv_path.unlink(missing_ok=True)
 
+all_pairs = []
+for group in (stocks_pairs, forex_pairs, index_pairs, crypto_pairs):
+    for pair in group:
+        if pair not in all_pairs:
+            all_pairs.append(pair)
+if benchmark_symbol and benchmark_symbol not in all_pairs:
+    all_pairs.append(benchmark_symbol)
+
 # Main loop
-for pair in (stocks_pairs + forex_pairs + index_pairs + crypto_pairs):
+for pair in all_pairs:
     for interval in intervals:
 
         # Save with index=True to keep the proper Datetime Index

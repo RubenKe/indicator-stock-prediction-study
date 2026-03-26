@@ -164,6 +164,27 @@ def annualized_return_pct(total_return_pct, start_dt, end_dt):
     return ((gross ** (365.25 / days)) - 1.0) * 100.0
 
 
+def compute_benchmark_gain(benchmark_df, start_date, end_date):
+    if benchmark_df is None or benchmark_df.empty:
+        return None
+    if "close" not in benchmark_df.columns:
+        return None
+    if not isinstance(benchmark_df.index, pd.DatetimeIndex):
+        benchmark_df = benchmark_df.copy()
+        benchmark_df.index = pd.to_datetime(benchmark_df.index, errors="coerce")
+        benchmark_df = benchmark_df[benchmark_df.index.notna()]
+    window = benchmark_df.loc[
+        (benchmark_df.index >= start_date) & (benchmark_df.index <= end_date)
+    ]
+    if window.empty:
+        return None
+    start_price = window["close"].iloc[0]
+    end_price = window["close"].iloc[-1]
+    if start_price == 0:
+        return None
+    return ((end_price - start_price) / start_price) * 100.0
+
+
 def load_config():
     if not CONFIG_PATH.exists():
         raise FileNotFoundError(f"Missing config file: {CONFIG_PATH}")
@@ -182,6 +203,12 @@ def load_or_init_results():
         df["backtest_version"] = "legacy"
     if "risk_profile" not in df.columns:
         df["risk_profile"] = "legacy"
+    if "benchmark_symbol" not in df.columns:
+        df["benchmark_symbol"] = None
+    if "benchmark_gain" not in df.columns:
+        df["benchmark_gain"] = None
+    if "benchmark_excess_return" not in df.columns:
+        df["benchmark_excess_return"] = None
     return df
 
 
@@ -283,6 +310,8 @@ def extract_result_row(
     slippage,
     sizer,
     risk_profile,
+    benchmark_symbol,
+    benchmark_df,
 ):
     ta = result.analyzers.trades.get_analysis()
     sa = result.analyzers.sharpe.get_analysis()
@@ -326,6 +355,10 @@ def extract_result_row(
     end_date = pd.Timestamp(bt.num2date(result.data.datetime.array[-1]))
     annualized_return = annualized_return_pct(strategy_return, start_date, end_date)
     calmar = (annualized_return / max_drawdown_pct) if max_drawdown_pct > 0 else 0.0
+    benchmark_gain = compute_benchmark_gain(benchmark_df, start_date, end_date)
+    benchmark_excess_return = (
+        strategy_return - benchmark_gain if benchmark_gain is not None else None
+    )
 
     return {
         "strategy": strategy_name,
@@ -343,6 +376,9 @@ def extract_result_row(
         "sizer": sizer,
         "market_gain": market_gain,
         "excess_return": excess_return,
+        "benchmark_symbol": benchmark_symbol,
+        "benchmark_gain": benchmark_gain,
+        "benchmark_excess_return": benchmark_excess_return,
         "annualized_return": annualized_return,
         "max_drawdown_pct": max_drawdown_pct,
         "max_moneydown": max_moneydown,
@@ -376,6 +412,7 @@ def run_backtests():
     sizer = config["sizer"]
     risk_config = config.get("risk", {})
     risk_profile = json.dumps(risk_config, sort_keys=True)
+    benchmark_symbol = config.get("benchmark_symbol", "^GSPC")
 
     validate_strategy_setup(config["params"])
     param_sets = build_param_sets(config["params"])
@@ -399,6 +436,7 @@ def run_backtests():
             price_df = get_price_df(symbol, interval, data_cache)
             if price_df is None:
                 continue
+            benchmark_df = get_price_df(benchmark_symbol, interval, data_cache)
 
             for strategy_name in strategy_names:
                 combos = param_sets[strategy_name]
@@ -438,6 +476,8 @@ def run_backtests():
                         slippage=slippage,
                         sizer=sizer,
                         risk_profile=risk_profile,
+                        benchmark_symbol=benchmark_symbol,
+                        benchmark_df=benchmark_df,
                     )
                     all_new_results.append(row)
                     existing_run_keys.add(run_key)

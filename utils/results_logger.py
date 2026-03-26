@@ -21,6 +21,9 @@ def make_file():
         "sizer",              # % of capital used per trade
         "market_gain",        # % of market grown during trading period
         "excess_return",      # % difference of return to market gain
+        "benchmark_symbol",   # symbol used for benchmark comparison
+        "benchmark_gain",     # % benchmark grew during trading period
+        "benchmark_excess_return",  # % difference of return to benchmark gain
         "annualized_return",  # annualized strategy return in %
         "max_drawdown_pct",   # maximum drawdown in %
         "max_moneydown",      # maximum monetary drawdown

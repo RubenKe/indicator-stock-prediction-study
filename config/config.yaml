@@ -16,6 +16,7 @@ indices:
   - ^DJI        # Dow Jones
   - GLD         # goud
   - USO         # olie
+benchmark_symbol: ^GSPC  # default benchmark for strategy comparisons
 
 crypto:
   - BTC-USD     # ~4000 rijen, meeste geschiedenis
@@ -284,7 +285,7 @@ INTERVAL_TO_TIMEFRAME:
   1wk: Weeks
 commission: 0.0005
 slippage: 0.0005
-sizer: 50
+sizer: 80
 risk:
   risk_per_trade: 0.015
   max_position_value_pct: 0.7
