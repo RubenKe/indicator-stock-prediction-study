@@ -134,6 +134,9 @@ def evaluate_config(
 ):
     rows = []
     for sc in scenarios:
+        tuned_risk = dict(risk_config)
+        tuned_risk["sizer_pct"] = float(sizer)
+        tuned_risk["max_position_value_pct"] = float(sizer) / 100.0
         key = str(sc["data_path"])
         if key not in data_cache:
             data_cache[key] = pd.read_csv(sc["data_path"], index_col=0, parse_dates=True)
@@ -148,7 +151,7 @@ def evaluate_config(
             sizer=sizer,
             interval=sc["interval"],
             interval_to_timeframe=interval_to_timeframe,
-            risk_config=risk_config,
+            risk_config=tuned_risk,
             **sc["params"],
         )
 

@@ -409,8 +409,10 @@ def run_backtests():
 
     commission = config["commission"]
     slippage = float(config.get("slippage", 0.0))
-    sizer = config["sizer"]
-    risk_config = config.get("risk", {})
+    sizer = float(config.get("sizer", 100.0))
+    risk_config = dict(config.get("risk", {}))
+    risk_config["sizer_pct"] = sizer
+    risk_config["max_position_value_pct"] = sizer / 100.0
     risk_profile = json.dumps(risk_config, sort_keys=True)
     benchmark_symbol = config.get("benchmark_symbol", "^GSPC")
 

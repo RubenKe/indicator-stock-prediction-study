@@ -4,6 +4,7 @@ import backtrader as bt
 DEFAULT_RISK_CONFIG = {
     "risk_per_trade": 0.005,
     "max_position_value_pct": 0.50,
+    "sizer_pct": 100.0,
     "drawdown_step_1": 0.10,
     "drawdown_step_2": 0.20,
     "drawdown_mult_1": 0.50,
@@ -55,10 +56,18 @@ class RiskManagedMixin:
         risk_amount = equity * risk_frac
         size_by_risk = risk_amount / stop_distance
 
-        max_position_value = equity * float(self._risk_cfg["max_position_value_pct"])
-        size_by_value = max_position_value / max(abs(float(entry_price)), min_stop_distance)
+        sizer_pct = self._risk_cfg.get("sizer_pct", None)
+        if sizer_pct is None:
+            sizer_pct = float(self._risk_cfg["max_position_value_pct"]) * 100.0
+        sizer_pct = min(max(float(sizer_pct), 0.0), 100.0)
+        max_position_value = equity * (sizer_pct / 100.0)
+        entry_price = max(abs(float(entry_price)), min_stop_distance)
+        size_by_value = max_position_value / entry_price
 
-        size = min(size_by_risk, size_by_value)
+        if sizer_pct >= 100.0:
+            size = size_by_value
+        else:
+            size = min(size_by_risk, size_by_value)
         if size < float(self._risk_cfg["min_trade_size"]):
             return 0.0
         return float(size)

@@ -285,10 +285,10 @@ INTERVAL_TO_TIMEFRAME:
   1wk: Weeks
 commission: 0.0005
 slippage: 0.0005
-sizer: 80
+sizer: 100
 risk:
   risk_per_trade: 0.015
-  max_position_value_pct: 0.7
+  max_position_value_pct: 1.0
   drawdown_step_1: 0.12
   drawdown_step_2: 0.2
   drawdown_mult_1: 0.6
