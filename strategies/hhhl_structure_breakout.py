@@ -265,6 +265,7 @@ def run(
     )
     cerebro.addanalyzer(bt.analyzers.DrawDown, _name="drawdown")
     cerebro.addanalyzer(bt.analyzers.TradeAnalyzer, _name="trades")
+    cerebro.addanalyzer(bt.analyzers.TimeReturn, _name="timereturn")
 
     results = cerebro.run()
     return results[0]

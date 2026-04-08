@@ -131,6 +131,40 @@ python run_all.py
 
 ---
 
+## Run A Single Strategy With Full Results
+
+If you want the **full per-bar equity curve** (not just summary stats), use the helper:
+
+```python
+from utils.single_strategy_runner import run_single_strategy
+
+out = run_single_strategy(
+    strategy_name="DMAC",
+    symbol="AAPL",
+    interval="1d",
+    param_dict={"pfast": 10, "pslow": 200, "adx_period": 14, "adx_threshold": 20},
+)
+```
+
+**What you get back**
+
+- `out["summary"]`: dict with the same summary metrics stored in `database/results.parquet`.
+- `out["equity_curve"]`: `DataFrame` with `equity` and `returns` indexed by datetime.
+- `out["price_df"]`: the price data used for the run.
+- `out["result"]`: the raw Backtrader strategy instance.
+
+**Plot the full equity curve**
+
+```python
+out["equity_curve"]["equity"].plot(figsize=(12, 4), title="Equity Curve")
+```
+
+Notes:
+- This uses the same config values from `config/config.yaml` by default (`commission`, `slippage`, `sizer`, `risk`, `benchmark_symbol`).
+- You can override them via the optional arguments in `run_single_strategy(...)`.
+
+---
+
 ## Risk Optimization (Optional)
 
 Tune the risk sizing config using a coordinate search over a predefined grid.
