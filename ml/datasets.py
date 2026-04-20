@@ -18,25 +18,33 @@ def discover_raw_datasets(data_dir: Path) -> list[DatasetSpec]:
     if not data_dir.exists():
         raise FileNotFoundError(f"Missing data directory: {data_dir}")
 
-    specs: list[DatasetSpec] = []
-    for csv_path in sorted(data_dir.glob("*.csv")):
-        if "_" not in csv_path.stem:
+    raw_paths = []
+    raw_paths.extend(sorted(data_dir.glob("*.parquet")))
+    raw_paths.extend(sorted(data_dir.glob("*.csv")))
+
+    specs: dict[str, DatasetSpec] = {}
+    for raw_path in raw_paths:
+        if "_" not in raw_path.stem:
             continue
-        symbol, interval = csv_path.stem.rsplit("_", 1)
+        symbol, interval = raw_path.stem.rsplit("_", 1)
         dataset_id = f"{symbol}_{interval}"
-        specs.append(
-            DatasetSpec(
-                dataset_id=dataset_id,
-                symbol=symbol,
-                interval=interval,
-                raw_path=csv_path,
-            )
+        if dataset_id in specs:
+            continue
+        specs[dataset_id] = DatasetSpec(
+            dataset_id=dataset_id,
+            symbol=symbol,
+            interval=interval,
+            raw_path=raw_path,
         )
-    return specs
+    return list(specs.values())
 
 
 def load_raw_ohlcv(spec: DatasetSpec) -> pd.DataFrame:
-    df = pd.read_csv(spec.raw_path, index_col=0, parse_dates=True)
+    if spec.raw_path.suffix.lower() == ".parquet":
+        df = pd.read_parquet(spec.raw_path)
+    else:
+        df = pd.read_csv(spec.raw_path, index_col=0, parse_dates=True)
+
     lower_cols = [str(c).lower() for c in df.columns]
     df.columns = lower_cols
 
@@ -74,7 +82,7 @@ def prepare_feature_cache(
 ) -> dict:
     specs = discover_raw_datasets(data_dir)
     if not specs:
-        raise RuntimeError(f"No CSV datasets found in {data_dir}")
+        raise RuntimeError(f"No raw datasets found in {data_dir}")
 
     exclude_symbols = exclude_symbols or set()
 

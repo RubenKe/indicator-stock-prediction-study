@@ -308,5 +308,5 @@ ml:
   random_state: 42
   feature_cache_dir: data/features
   model_registry_dir: models/ml_registry
-  results_path: database/ml_results.parquet
+  results_path: database/ml_results.csv
   experiment_version: loo_ml_v1

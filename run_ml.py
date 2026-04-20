@@ -4,7 +4,7 @@ from pathlib import Path
 
 import yaml
 
-from ml.datasets import ensure_feature_cache, load_prepared_datasets
+from ml.datasets import ensure_feature_cache, load_prepared_datasets, prepare_feature_cache
 from ml.features import FEATURE_COLUMNS
 from ml.models import parse_model_list, validate_profile
 from ml.persistence import (
@@ -68,6 +68,13 @@ def parse_args():
     run_all_parser.add_argument("--force", action="store_true")
     run_all_parser.add_argument("--seed", type=int, default=None)
     run_all_parser.add_argument("--n-jobs", type=int, default=-1)
+
+    quick_parser = subparsers.add_parser(
+        "quick",
+        help="Run a quick ML test on 1 dataset with 1 model.",
+    )
+    quick_parser.add_argument("--force", action="store_true")
+    quick_parser.add_argument("--seed", type=int, default=42)
 
     return parser.parse_args()
 
@@ -383,6 +390,36 @@ def cmd_run_all(args):
     )
 
 
+def cmd_quick(args):
+    cfg = load_config()
+    run_cfg = build_run_config(cfg, seed_override=args.seed)
+    # Override for quick mode: fewer CV splits, smaller test_candles
+    run_cfg.cv_splits = 3
+    run_cfg.test_candles = 1000  # Smaller for speed
+
+    exclude_symbols = set(cfg.get("crypto", []))
+    manifest = prepare_feature_cache(
+        data_dir=DATA_RAW_DIR,
+        feature_cache_dir=run_cfg.feature_cache_dir,
+        test_candles=run_cfg.test_candles,
+        force=args.force,
+        exclude_symbols=exclude_symbols,
+    )
+    test_datasets = sorted([d["dataset_id"] for d in manifest["datasets"]])
+    if test_datasets:
+        test_datasets = test_datasets[:1]  # Only first dataset
+
+    _run_workflow(
+        run_cfg=run_cfg,
+        test_datasets=test_datasets,
+        model_names=["logistic"],  # Only logistic for speed
+        profile="standard",
+        force=args.force,
+        seed=run_cfg.random_state,
+        n_jobs=1,  # Single job for simplicity
+    )
+
+
 def main():
     args = parse_args()
     if args.command == "prepare":
@@ -391,6 +428,8 @@ def main():
         cmd_run(args)
     elif args.command == "run-all":
         cmd_run_all(args)
+    elif args.command == "quick":
+        cmd_quick(args)
     else:
         raise ValueError(f"Unknown command: {args.command}")
 

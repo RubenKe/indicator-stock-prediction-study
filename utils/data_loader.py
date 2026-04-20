@@ -38,8 +38,8 @@ def download_pair(pair: str, interval: str) -> pd.DataFrame:
 
 # Cleanup and directory creation
 DATA_PROCESSED.mkdir(parents=True, exist_ok=True)
-for csv_path in DATA_PROCESSED.glob("*.csv"):
-    csv_path.unlink(missing_ok=True)
+for raw_path in list(DATA_PROCESSED.glob("*.csv")) + list(DATA_PROCESSED.glob("*.parquet")):
+    raw_path.unlink(missing_ok=True)
 
 all_pairs = []
 for group in (stocks_pairs, forex_pairs, index_pairs, crypto_pairs):
@@ -54,6 +54,5 @@ for pair in all_pairs:
     for interval in intervals:
 
         # Save with index=True to keep the proper Datetime Index
-        # We use index_label='Date' to ensure the first column is named correctly in CSV
         df = download_pair(pair, interval)
-        df.to_csv(DATA_PROCESSED / f'{pair}_{interval}.csv', index=True)
+        df.to_parquet(DATA_PROCESSED / f'{pair}_{interval}.parquet', index=True)

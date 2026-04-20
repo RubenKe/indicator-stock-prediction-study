@@ -66,7 +66,7 @@ pip install -r requirements.txt
 python utils/data_loader.py
 ```
 
-This clears only `data/raw` (downloaded market data), not cached ML features.
+This clears only `data/raw` (downloaded market data), not cached ML features. The downloader now saves raw OHLCV data in Parquet format.
 
 5. Run the classic strategy backtests. This evaluates every rule-based strategy across your config grid.
 
@@ -89,7 +89,7 @@ Run all datasets:
 python run_ml.py run-all
 ```
 
-You should see `data/features/manifest.json`, `database/ml_results.parquet`, and `analysis/results/ml/`.
+You should see `data/features/manifest.json`, `database/ml_results.csv`, and `analysis/results/ml/`.
 
 7. Analyze results in the notebook:
 
@@ -114,7 +114,7 @@ All core settings live in `config/config.yaml`:
 
 **Inputs**
 
-- Raw price CSVs in `data/raw/*.csv` (created by `utils/data_loader.py`).
+- Raw price Parquet files in `data/raw/*.parquet` (created by `utils/data_loader.py`).
 - Strategy definitions in `strategies/`.
 - Parameter grids from `config/config.yaml`.
 - Execution costs from `commission` and `slippage`.
@@ -211,6 +211,12 @@ python run_ml.py run --test-dataset AAPL_1d
 python run_ml.py run-all
 ```
 
+**Quick test (fast, 1 dataset, 1 model)**
+
+```bash
+python run_ml.py quick
+```
+
 **Model selection**
 
 ```bash
@@ -253,13 +259,13 @@ python run_ml.py run --test-dataset AAPL_1d --models logistic,random_forest
 
 - Feature cache created by `python run_ml.py prepare`.
 - Model runs created by `python run_ml.py run` or `python run_ml.py run-all`.
-- Written to `database/ml_results.parquet` and `analysis/results/ml/`.
+- Written to `database/ml_results.csv` and `analysis/results/ml/`.
 
 ## Outputs And Artifacts
 
 | Path | Description |
 | --- | --- |
-| `data/raw/*.csv` | Raw OHLCV data downloaded from `yfinance`. |
+| `data/raw/*.parquet` | Raw OHLCV data downloaded from `yfinance`. |
 | `database/results.parquet` | Classic backtest results (created by `python run_all.py`). |
 | `analysis/results/*.csv` | Exported analysis results from experiments. |
 | `data/features/*.parquet` | Feature cache for ML (created by `python run_ml.py prepare`). |
@@ -268,7 +274,7 @@ python run_ml.py run --test-dataset AAPL_1d --models logistic,random_forest
 | `models/ml_registry/{run_id}/{test_dataset}/{model_name}/metadata.json` | Run metadata and hyperparameters. |
 | `analysis/results/ml/{run_id}/{test_dataset}_{model_name}.csv` | Per-candle ML predictions and signals (created by `python run_ml.py run` / `run-all`). |
 | `analysis/results/ml/{run_id}/summary.csv` | ML run summary (created by `python run_ml.py run` / `run-all`). |
-| `database/ml_results.parquet` | Aggregated ML metrics (created by `python run_ml.py run` / `run-all`). |
+| `database/ml_results.csv` | Aggregated ML metrics (created by `python run_ml.py run` / `run-all`). |
 
 ---
 
@@ -279,9 +285,9 @@ python run_ml.py run --test-dataset AAPL_1d --models logistic,random_forest
 - `analysis/`: notebooks and exported analysis results.
 - `config/`: configuration files (symbols, intervals, params, ML settings).
 - `data/`: local datasets.
-- `data/raw/`: downloaded OHLCV CSVs from `yfinance`.
+- `data/raw/`: downloaded OHLCV Parquet files from `yfinance`.
 - `data/features/`: ML feature cache and `manifest.json`.
-- `database/`: parquet result stores (classic and ML).
+- `database/`: result stores (classic Parquet, ML CSV).
 - `ml/`: feature engineering, model definitions, training, evaluation, persistence.
 - `models/`: saved ML model artifacts.
 - `strategies/`: rule-based strategy implementations.

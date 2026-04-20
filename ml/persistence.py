@@ -109,16 +109,31 @@ def _coerce_dtypes(df: pd.DataFrame) -> pd.DataFrame:
     return out[RESULT_COLUMNS]
 
 
+def _read_results(results_path: Path, columns: list[str] | None = None) -> pd.DataFrame:
+    if results_path.suffix.lower() == ".csv":
+        if columns is None:
+            return pd.read_csv(results_path)
+        return pd.read_csv(results_path, usecols=columns)
+    return pd.read_parquet(results_path, columns=columns)
+
+
+def _write_results(df: pd.DataFrame, results_path: Path) -> None:
+    if results_path.suffix.lower() == ".csv":
+        df.to_csv(results_path, index=False)
+    else:
+        df.to_parquet(results_path, index=False)
+
+
 def bootstrap_results_file(results_path: Path) -> None:
     results_path.parent.mkdir(parents=True, exist_ok=True)
     if not results_path.exists():
-        _empty_results_frame().to_parquet(results_path, index=False)
+        _write_results(_empty_results_frame(), results_path)
 
 
 def load_existing_experiment_keys(results_path: Path) -> set[str]:
     if not results_path.exists():
         return set()
-    df = pd.read_parquet(results_path, columns=["experiment_key"])
+    df = _read_results(results_path, columns=["experiment_key"])
     return set(df["experiment_key"].dropna().astype(str).tolist())
 
 
@@ -131,7 +146,7 @@ def append_result_rows(
         return 0
 
     bootstrap_results_file(results_path)
-    existing = pd.read_parquet(results_path)
+    existing = _read_results(results_path)
     incoming = pd.DataFrame(rows)
 
     for col in RESULT_COLUMNS:
@@ -152,7 +167,7 @@ def append_result_rows(
     else:
         out = pd.concat([existing, incoming], ignore_index=True)
         out = _coerce_dtypes(out)
-    out.to_parquet(results_path, index=False)
+    _write_results(out, results_path)
     return int(len(incoming))
 
 
