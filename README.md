@@ -34,66 +34,78 @@ A reproducible research framework to evaluate classic technical strategies and M
 
 ## Quickstart
 
-1. Create a virtual environment (optional but recommended).
+### Setup (One-Time)
 
-```bash
-python -m venv .venv
-```
+1. **Create a virtual environment** (recommended to isolate dependencies).
 
-Windows:
+   ```bash
+   python -m venv .venv
+   ```
 
-```bash
-.venv\Scripts\activate
-```
+   - **Windows**: `.venv\Scripts\activate`
+   - **macOS/Linux**: `source .venv/bin/activate`
 
-macOS/Linux:
+2. **Install dependencies**.
 
-```bash
-source .venv/bin/activate
-```
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-2. Install dependencies. This sets up all required Python packages.
+3. **Configure the project** (optional, but customize if needed).
+   - Edit `config/config.yaml` to set instruments (stocks, forex, crypto), time intervals, strategy parameters, etc.
 
-```bash
-pip install -r requirements.txt
-```
+4. **Download price data**.
+   - Fetches OHLCV data for configured instruments and saves to `data/raw/` in Parquet format.
 
-3. Configure instruments, intervals, and parameters in `config/config.yaml`. This controls what markets and timeframes are tested.
+   ```bash
+   python utils/data_loader.py
+   ```
 
-4. Download price data into `data/raw/`. This fetches the latest OHLCV data for your config.
+   - Note: This only clears `data/raw/` (market data), not ML feature caches.
 
-```bash
-python utils/data_loader.py
-```
+### Run Classic (Rule-Based) Strategies
 
-This clears only `data/raw` (downloaded market data), not cached ML features. The downloader now saves raw OHLCV data in Parquet format.
+5. **Run all classic strategy backtests**.
+   - Evaluates every rule-based strategy across your parameter grid.
+   - Results saved to `database/results.parquet`.
 
-5. Run the classic strategy backtests. This evaluates every rule-based strategy across your config grid.
+   ```bash
+   python run_all.py
+   ```
 
-```bash
-python run_all.py
-```
+### Train All AI/ML Models
 
-You should see `database/results.parquet` updated or created.
+6. **Prepare ML features** (one-time after data download).
+   - Processes raw data into ML-ready features and caches them.
 
-6. Run the ML pipeline (leave-one-dataset-out). This trains ML models on all datasets except one, then tests on the held-out dataset.
+   ```bash
+   python run_ml.py prepare
+   ```
 
-```bash
-python run_ml.py prepare
-python run_ml.py run --test-dataset AAPL_1d
-```
+7. **Train ML models on all datasets**.
+   - Uses leave-one-dataset-out evaluation: trains on all datasets except one, tests on the held-out one.
+   - Default models: logistic regression, random forest, gradient boosting.
+   - Models and predictions saved to `models/ml_registry/` and `analysis/results/ml/`.
 
-Run all datasets:
+   ```bash
+   python run_ml.py run-all
+   ```
 
-```bash
-python run_ml.py run-all
-```
+   - For a single dataset test: `python run_ml.py run --test-dataset AAPL_1d`
+   - For a quick test: `python run_ml.py quick`
+   - Customize models: `--models "logistic,random_forest"`
+   - Use parallel processing: `--n-jobs -1`
 
-You should see `data/features/manifest.json`, `database/ml_results.csv`, and `analysis/results/ml/`.
+### Retrieve and Analyze Results
 
-7. Analyze results in the notebook:
+8. **View ML results**.
+   - **Summary metrics**: `database/ml_results.csv` (ROC AUC, accuracy, trading returns, Sharpe, etc.)
+   - **Detailed predictions**: `analysis/results/ml/<run_folder>/<dataset>_<model>.csv` (per-candle predictions)
+   - **Model artifacts**: `models/ml_registry/<run_folder>/<dataset>/<model>/` (saved models and metadata)
 
-`analysis/results_analyser.ipynb`
+9. **Analyze in the notebook**.
+   - Open `analysis/ml_results_analysis.ipynb` for visualizations, comparisons, and deeper analysis.
+   - Loads results from the above files and generates plots/metrics.
 
 ---
 
