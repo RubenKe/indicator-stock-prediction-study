@@ -13,10 +13,10 @@ with open(CONFIG_PATH, "r") as f:
     config = yaml.safe_load(f)
 
 
-stocks_pairs = config["stocks"]
-forex_pairs = config["forex"]
-index_pairs = config["indices"]
-crypto_pairs = config.get("crypto", [])
+stocks_pairs = config.get("stocks") or []
+forex_pairs = config.get("forex") or []
+index_pairs = config.get("indices") or []
+crypto_pairs = config.get("crypto") or []
 benchmark_symbol = config.get("benchmark_symbol")
 
 intervals = config["intervals"]
