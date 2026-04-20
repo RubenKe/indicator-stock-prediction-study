@@ -20,11 +20,12 @@ crypto_pairs = config.get("crypto") or []
 benchmark_symbol = config.get("benchmark_symbol")
 
 intervals = config["intervals"]
-periods = config["periods"]
+# # periods = config["periods"]  # Not used anymore, using start/end for more data  # Not used anymore, using start/end for more data
 max_candles = int(config.get("max_candles", 5000))
 
 def download_pair(pair: str, interval: str) -> pd.DataFrame:
-    data = yf.download(pair, interval=interval, period=periods[interval], progress=False)
+    # Use start and end to get more historical data, yfinance period limits intraday
+    data = yf.download(pair, start='2015-01-01', end=None, interval=interval, progress=False)
 
     # This flattens the columns so headers are just 'Open', 'High', etc.
     if isinstance(data.columns, pd.MultiIndex):
