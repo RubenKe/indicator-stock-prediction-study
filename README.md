@@ -238,6 +238,7 @@ python run_ml.py run --test-dataset AAPL_1d --models logistic,random_forest
 - Datasets that do not have enough rows are skipped and recorded in `data/features/manifest.json`.
 - Crypto symbols are excluded from ML by default (to avoid short history issues).
 - Training requires at least 2 datasets after filtering (GroupKFold).
+- Default ML execution includes a 0.1% commission per trade and no extra slippage.
 
 ---
 

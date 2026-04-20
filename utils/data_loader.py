@@ -21,6 +21,7 @@ benchmark_symbol = config.get("benchmark_symbol")
 
 intervals = config["intervals"]
 periods = config["periods"]
+max_candles = int(config.get("max_candles", 5000))
 
 def download_pair(pair: str, interval: str) -> pd.DataFrame:
     data = yf.download(pair, interval=interval, period=periods[interval], progress=False)
@@ -32,7 +33,8 @@ def download_pair(pair: str, interval: str) -> pd.DataFrame:
     data.columns = data.columns.str.lower()
 
     
-    return data.tail(5000) # Keep the most recent 5000 rows so all df are equal in length
+    # Keep the most recent N rows so all df are equal in length (crypto may have fewer).
+    return data.tail(max_candles)
 
 # Cleanup and directory creation
 DATA_PROCESSED.mkdir(parents=True, exist_ok=True)

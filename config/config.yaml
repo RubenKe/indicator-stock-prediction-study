@@ -284,8 +284,8 @@ INTERVAL_TO_TIMEFRAME:
   4h: Minutes
   1d: Days
   1wk: Weeks
-commission: 0.0005
-slippage: 0.0005
+commission: 0.001
+slippage: 0.0
 sizer: 100
 risk:
   risk_per_trade: 0.015
