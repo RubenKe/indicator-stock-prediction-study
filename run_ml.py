@@ -1,5 +1,6 @@
 import argparse
 import json
+import time
 from pathlib import Path
 
 import yaml
@@ -133,13 +134,12 @@ def _make_run_id(seed: int, profile: str, model_names: list[str]) -> str:
     return f"ml_{timestamp}_models-{models_tag}_seed-{seed}_{hash_suffix}"
 
 
-def prepare_cache(run_cfg: RunConfig, force: bool, exclude_symbols: set[str] | None = None) -> dict:
+def prepare_cache(run_cfg: RunConfig, force: bool) -> dict:
     manifest = ensure_feature_cache(
         data_dir=DATA_RAW_DIR,
         feature_cache_dir=run_cfg.feature_cache_dir,
         test_candles=run_cfg.test_candles,
         force=force,
-        exclude_symbols=exclude_symbols,
     )
     print(
         f"Prepared feature cache at {run_cfg.feature_cache_dir} "
@@ -159,7 +159,13 @@ def _run_for_test_dataset(
     run_cfg: RunConfig,
     dataset_frames: dict,
     existing_keys: set[str],
+    dataset_index: int | None = None,
+    dataset_total: int | None = None,
 ) -> list[dict]:
+    ds_prefix = ""
+    if dataset_index is not None and dataset_total is not None:
+        ds_prefix = f"[dataset {dataset_index}/{dataset_total}] "
+
     train_df, test_df, train_ids = build_train_test_frames(
         dataset_frames=dataset_frames,
         test_dataset=test_dataset,
@@ -169,7 +175,7 @@ def _run_for_test_dataset(
     symbol = str(test_df["symbol"].iloc[0])
     interval = str(test_df["interval"].iloc[0])
 
-    for model_name in model_names:
+    for model_idx, model_name in enumerate(model_names, start=1):
         experiment_payload = {
             "experiment_version": run_cfg.experiment_version,
             "test_dataset": test_dataset,
@@ -185,10 +191,17 @@ def _run_for_test_dataset(
         }
         experiment_key = stable_hash(experiment_payload, length=24)
         if not force and experiment_key in existing_keys:
-            print(f"Skipping existing experiment: {test_dataset} / {model_name}")
+            print(
+                f"{ds_prefix}[model {model_idx}/{len(model_names)}] "
+                f"Skipping existing experiment: {test_dataset} / {model_name}"
+            )
             continue
 
-        print(f"Training {model_name} | test={test_dataset}")
+        model_start = time.time()
+        print(
+            f"{ds_prefix}[model {model_idx}/{len(model_names)}] "
+            f"Training {model_name} | test={test_dataset}"
+        )
         tuned = tune_model_with_group_kfold(
             model_name=model_name,
             profile=profile,
@@ -282,14 +295,19 @@ def _run_for_test_dataset(
         }
         rows.append(row)
         existing_keys.add(experiment_key)
+        model_elapsed = time.time() - model_start
+        print(
+            f"{ds_prefix}[model {model_idx}/{len(model_names)}] "
+            f"Completed {model_name} | test={test_dataset} | "
+            f"elapsed={model_elapsed:.1f}s | roc_auc={metrics['test_roc_auc']:.4f}"
+        )
     return rows
 
 
 def cmd_prepare(args):
     cfg = load_config()
     run_cfg = build_run_config(cfg)
-    exclude_symbols = set(cfg.get("crypto", []))
-    prepare_cache(run_cfg, force=args.force, exclude_symbols=exclude_symbols)
+    prepare_cache(run_cfg, force=args.force)
 
 
 def _run_workflow(
@@ -301,6 +319,7 @@ def _run_workflow(
     seed: int,
     n_jobs: int,
 ) -> None:
+    workflow_start = time.time()
     dataset_frames = load_prepared_datasets(run_cfg.feature_cache_dir)
     available = sorted(dataset_frames.keys())
 
@@ -315,7 +334,14 @@ def _run_workflow(
     print(f"Run ID: {run_id}")
 
     all_rows: list[dict] = []
-    for test_dataset in test_datasets:
+    total_datasets = len(test_datasets)
+    print(
+        f"Starting ML workflow: {total_datasets} test datasets x "
+        f"{len(model_names)} models = {total_datasets * len(model_names)} jobs."
+    )
+    for idx, test_dataset in enumerate(test_datasets, start=1):
+        dataset_start = time.time()
+        print(f"[dataset {idx}/{total_datasets}] Starting test dataset: {test_dataset}")
         rows = _run_for_test_dataset(
             run_id=run_id,
             test_dataset=test_dataset,
@@ -327,8 +353,15 @@ def _run_workflow(
             run_cfg=run_cfg,
             dataset_frames=dataset_frames,
             existing_keys=existing_keys,
+            dataset_index=idx,
+            dataset_total=total_datasets,
         )
         all_rows.extend(rows)
+        dataset_elapsed = time.time() - dataset_start
+        print(
+            f"[dataset {idx}/{total_datasets}] Finished {test_dataset} | "
+            f"elapsed={dataset_elapsed:.1f}s | rows_added={len(rows)}"
+        )
 
     if not all_rows:
         print("No new model runs were produced.")
@@ -344,8 +377,10 @@ def _run_workflow(
         rows=all_rows,
         dedupe_on_experiment_key=not force,
     )
+    total_elapsed = time.time() - workflow_start
     print(f"Wrote {written} rows to {run_cfg.results_path}")
     print(f"Summary: {summary_path}")
+    print(f"Workflow finished in {total_elapsed:.1f}s")
 
 
 def cmd_run(args):
@@ -353,8 +388,7 @@ def cmd_run(args):
     run_cfg = build_run_config(cfg, seed_override=args.seed)
     model_names = parse_model_list(args.models)
     profile = validate_profile(args.profile)
-    exclude_symbols = set(cfg.get("crypto", []))
-    prepare_cache(run_cfg, force=False, exclude_symbols=exclude_symbols)
+    prepare_cache(run_cfg, force=False)
 
     _run_workflow(
         run_cfg=run_cfg,
@@ -373,8 +407,7 @@ def cmd_run_all(args):
     model_names = parse_model_list(args.models)
     profile = validate_profile(args.profile)
 
-    exclude_symbols = set(cfg.get("crypto", []))
-    manifest = prepare_cache(run_cfg, force=False, exclude_symbols=exclude_symbols)
+    manifest = prepare_cache(run_cfg, force=False)
     test_datasets = sorted([d["dataset_id"] for d in manifest["datasets"]])
     if args.max_tests > 0:
         test_datasets = test_datasets[: args.max_tests]
@@ -397,13 +430,11 @@ def cmd_quick(args):
     run_cfg.cv_splits = 3
     run_cfg.test_candles = 1000  # Smaller for speed
 
-    exclude_symbols = set(cfg.get("crypto", []))
     manifest = prepare_feature_cache(
         data_dir=DATA_RAW_DIR,
         feature_cache_dir=run_cfg.feature_cache_dir,
         test_candles=run_cfg.test_candles,
         force=args.force,
-        exclude_symbols=exclude_symbols,
     )
     test_datasets = sorted([d["dataset_id"] for d in manifest["datasets"]])
     if test_datasets:

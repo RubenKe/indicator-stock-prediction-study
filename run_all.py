@@ -421,13 +421,13 @@ def run_backtests():
     strategy_names = list(config["params"].keys())
 
     interval_to_timeframe = build_interval_to_timeframe(config["INTERVAL_TO_TIMEFRAME"])
-    intervals = config["intervals"]
-    all_symbols = (
-        config["stocks"]
-        + config["forex"]
-        + config["indices"]
-        + config.get("crypto", [])
-    )
+    backtest_cfg = config.get("backtest", {})
+    intervals = backtest_cfg.get("intervals", config["intervals"])
+    include_crypto = bool(backtest_cfg.get("include_crypto", True))
+
+    all_symbols = config["stocks"] + config["forex"] + config["indices"]
+    if include_crypto:
+        all_symbols += config.get("crypto", [])
 
     existing_run_keys = build_existing_run_keys(df)
     all_new_results = []

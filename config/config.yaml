@@ -19,16 +19,26 @@ indices:
 benchmark_symbol: ^GSPC  # default benchmark for strategy comparisons
 
 crypto:
-#  - BTC-USD     # ~4000 rijen, meeste geschiedenis
-#  - ETH-USD     # ~3200 rijen
+  - BTC-USD
+  - ETH-USD
 
 intervals:
-- 1d
+  - 1d
+  - 1h
+  - 15m
 periods:
   1d: max
+  1h: 730d
+  15m: 60d
 max_candles: 5000
-ml:
-  test_candles: 5000
+max_candles_by_interval:
+  1d: 5000
+  1h: 1250
+  15m: 1250
+backtest:
+  intervals:
+    - 1d
+  include_crypto: false
 params:
   DMAC:
     short_ema:
@@ -298,7 +308,12 @@ risk:
   default_stop_atr: 2.0
   atr_len_for_sizing: 14
 ml:
-  test_candles: 5000
+  test_candles: 1250
+  intervals:
+    - 1d
+    - 1h
+    - 15m
+  include_crypto: true
   threshold_long: 0.55
   threshold_short: 0.45
   cv_splits: 5
