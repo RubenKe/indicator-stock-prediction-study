@@ -107,6 +107,22 @@ A reproducible research framework to evaluate classic technical strategies and M
    - Open `analysis/ml_results_analysis.ipynb` for visualizations, comparisons, and deeper analysis.
    - Loads results from the above files and generates plots/metrics.
 
+10. **Analyze with the CLI report generator**.
+   - Generate a full ML analysis package directly from the ML results table, including rankings, CSV exports, plots, and a markdown report under `analysis/results/ml/analyzer_output/`.
+
+   ```bash
+   python analysis/ml_results_analyzer.py --top 10
+   ```
+
+   - Focus on one run: `python analysis/ml_results_analyzer.py --run-id <run_id>`
+   - Filter models or symbols: `python analysis/ml_results_analyzer.py --model logistic random_forest --symbol AAPL MSFT`
+   - Inspect more candle-level detail for the best runs: `python analysis/ml_results_analyzer.py --detail-top 8`
+   - Skip file export if you only want terminal output: `python analysis/ml_results_analyzer.py --no-export`
+   - Main outputs:
+     - `analysis/results/ml/analyzer_output/report.md`
+     - `analysis/results/ml/analyzer_output/tables/*.csv`
+     - `analysis/results/ml/analyzer_output/plots/*.png`
+
 ---
 
 ## Configuration
