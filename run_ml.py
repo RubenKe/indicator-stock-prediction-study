@@ -27,7 +27,7 @@ from ml.utils import resolve_path, stable_hash, utc_now_compact, utc_now_iso
 PROJECT_ROOT = Path(__file__).resolve().parent
 CONFIG_PATH = PROJECT_ROOT / "config" / "config.yaml"
 DATA_RAW_DIR = PROJECT_ROOT / "data" / "raw"
-ANALYSIS_ML_DIR = PROJECT_ROOT / "analysis" / "results" / "ml"
+ANALYSIS_ML_DIR = PROJECT_ROOT / "analysis" / "results" / "ml" / "csv"
 
 
 def parse_args():
