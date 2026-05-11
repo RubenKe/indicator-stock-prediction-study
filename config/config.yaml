@@ -295,6 +295,7 @@ INTERVAL_TO_TIMEFRAME:
 commission: 0.001
 slippage: 0.0
 sizer: 100
+spread: 0.00025
 risk:
   risk_per_trade: 0.015
   max_position_value_pct: 1.0
