@@ -349,3 +349,9 @@ ml_20260323T112233Z_models-logistic-random_forest_seed-42_a1b2c3d4
 - This project is for research only. It is not a live trading system.
 - Results depend on the data window defined in `config/config.yaml`.
 - `utils/data_loader.py` truncates each dataset to the most recent 5000 rows so all datasets have equal length.
+
+---
+
+## File structure
+
+<img width="2052" height="3376" alt="diagram" src="https://github.com/user-attachments/assets/05b5ad16-5073-482b-820c-5047b6c859f7" />
